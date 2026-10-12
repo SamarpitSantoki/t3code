@@ -51,7 +51,8 @@ export function AndroidHeaderIconButton(props: {
       style={{ width: HEADER_CONTROL_SIZE, height: HEADER_CONTROL_SIZE }}
     >
       <SymbolView
-        name={props.icon}
+        // Shared screens pass the iOS overflow glyph; Android header overflow is vertical.
+        name={props.icon === "ellipsis" ? { ios: "ellipsis", android: "more_vert" } : props.icon}
         size={HEADER_ICON_SIZE}
         tintColorClassName={
           props.disabled

@@ -49,7 +49,11 @@ function MenuIcon(props: {
 /** Native popup positioned at the original trigger, outside virtualized rows. */
 export function MaterialMenuPopup(props: MaterialMenuPopupProps) {
   const { appearance, themeAppearance, themeVariables: colors } = useAppearancePreferences();
-  const { scale, menuItemHeight } = useAndroidControlSizing();
+  const { scale, menuItemHeight, iconSize } = useAndroidControlSizing();
+  // Compose only indents rows that carry a leading icon; keep labels aligned when some rows lack one.
+  const reserveIcon =
+    Boolean(props.parent) ||
+    props.actions.some((action) => action.image && isAppSymbolName(action.image));
   const body = resolveScaledTextRole("body", appearance.baseFontSize);
   const caption = resolveScaledTextRole("caption", appearance.baseFontSize);
   const fontFamily = useFontFamily("regular");
@@ -93,6 +97,10 @@ export function MaterialMenuPopup(props: MaterialMenuPopupProps) {
                 destructive={action.attributes?.destructive}
                 disabled={action.attributes?.disabled}
               />
+            </DropdownMenuItem.LeadingIcon>
+          ) : reserveIcon ? (
+            <DropdownMenuItem.LeadingIcon>
+              <Box modifiers={[size(iconSize, iconSize)]} />
             </DropdownMenuItem.LeadingIcon>
           ) : null}
           <DropdownMenuItem.Text>

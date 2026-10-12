@@ -64,7 +64,9 @@ export function WorkspaceToolbar(props: {
   const workspace = useWorkspaceTabs();
   const navigation = useNavigation();
   const input = useRef<TextInputInstance>(null);
-  const [focusRequest, setFocusRequest] = useState(0);
+  // Android ignores focus() on an input that is not attached yet, so a search opened from the
+  // resting dock focuses through autoFocus once the field mounts.
+  const [focusOnMount, setFocusOnMount] = useState(false);
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const edge = width < 360 ? 12 : WORKSPACE_TOOLBAR.edge;
@@ -83,13 +85,15 @@ export function WorkspaceToolbar(props: {
     if (tab !== "threads" && tab !== "pullRequests") return false;
     workspace.dispatch({ type: "scroll", tab, offset: workspace.getScrollOffset(tab) });
     workspace.dispatch({ type: "search" });
-    setFocusRequest((request) => request + 1);
+    if (input.current) input.current.focus();
+    else setFocusOnMount(true);
     return true;
   }, [workspace, homeFocused]);
   useHardwareKeyboardCommand("focusSearch", focusSearch);
   useFocusEffect(useCallback(() => () => Keyboard.dismiss(), []));
   const cancelSearch = useCallback(() => {
     Keyboard.dismiss();
+    setFocusOnMount(false);
     if (workspace)
       workspace.recordScrollOffset(
         workspace.state.selectedTab,
@@ -113,9 +117,6 @@ export function WorkspaceToolbar(props: {
     const subscription = BackHandler.addEventListener("hardwareBackPress", handleBack);
     return () => subscription.remove();
   }, []);
-  useEffect(() => {
-    if (focusRequest > 0) input.current?.focus();
-  }, [focusRequest]);
   if (!workspace) return null;
   const { state, dispatch } = workspace;
   const tab = state.tabs[state.selectedTab];
@@ -159,7 +160,11 @@ export function WorkspaceToolbar(props: {
                   placeholderTextColor={placeholderStyle.color}
                   value={tab.query}
                   onChangeText={(query) => dispatch({ type: "query", query })}
-                  onFocus={() => dispatch({ type: "search" })}
+                  autoFocus={focusOnMount}
+                  onFocus={() => {
+                    setFocusOnMount(false);
+                    dispatch({ type: "search" });
+                  }}
                   onSubmitEditing={() => Keyboard.dismiss()}
                   autoCapitalize="none"
                   autoCorrect={false}

@@ -638,7 +638,8 @@ export function PullRequestRouteScreen({ route }: StaticScreenProps<PullRequestP
                         >
                           <PullRequestIdentity pr={identity} params={params} />
                           <SegmentedControl
-                            className="bg-grouped-card"
+                            // Android draws Material segmented buttons with their own rounded fill.
+                            className={Platform.OS === "android" ? undefined : "bg-grouped-card"}
                             options={[
                               { value: "overview", label: "Overview" },
                               ...(guidesEnabled
