@@ -6,6 +6,7 @@ import { SafeAreaInsetsContext, useSafeAreaInsets } from "react-native-safe-area
 
 import { CompactBrandTitle } from "../../components/CompactBrandTitle";
 import { AndroidScreenHeader } from "../../components/AndroidScreenHeader";
+import { EmptyState } from "../../components/EmptyState";
 import { NativeStackScreenOptions } from "../../native/StackHeader";
 import { NativePrimaryColumnContext } from "../../native/v5-workspace-context";
 import {
@@ -73,7 +74,7 @@ function WorkspaceRootContent() {
   const renderHeaderTitle = useCallback(
     () => (
       <WorkspaceRootTitle
-        maxWidth={Math.max(0, width - 160)}
+        maxWidth={Math.max(0, width - (Platform.OS === "android" ? 168 : 160))}
         onOpenEnvironments={() =>
           navigation.navigate("SettingsSheet", {
             screen: "SettingsContent",
@@ -113,29 +114,34 @@ function WorkspaceRootContent() {
             }}
           />
         ) : (
-          <AndroidScreenHeader
-            title="T3 Code"
-            titleContent={renderHeaderTitle()}
-            actions={[
-              {
-                accessibilityLabel:
-                  state.selectedTab === "threads" ? "Search threads" : "Search pull requests",
-                icon: "magnifyingglass",
-                onPress: () => {
-                  dispatchHardwareKeyboardCommand("focusSearch");
+          <>
+            {/* Home's stack options request the iOS header; Android draws its own in-flow. */}
+            <NativeStackScreenOptions options={{ headerShown: false }} />
+            <AndroidScreenHeader
+              title="T3 Code"
+              // Align the brand with the list rows' 20dp leading inset.
+              titleContent={<View className="pl-2">{renderHeaderTitle()}</View>}
+              actions={[
+                {
+                  accessibilityLabel:
+                    state.selectedTab === "threads" ? "Search threads" : "Search pull requests",
+                  icon: "magnifyingglass",
+                  onPress: () => {
+                    dispatchHardwareKeyboardCommand("focusSearch");
+                  },
                 },
-              },
-              {
-                accessibilityLabel: "Settings",
-                icon: "gearshape",
-                onPress: () =>
-                  navigation.navigate("SettingsSheet", {
-                    screen: "SettingsContent",
-                    params: { screen: "Settings" },
-                  }),
-              },
-            ]}
-          />
+                {
+                  accessibilityLabel: "Settings",
+                  icon: "gearshape",
+                  onPress: () =>
+                    navigation.navigate("SettingsSheet", {
+                      screen: "SettingsContent",
+                      params: { screen: "Settings" },
+                    }),
+                },
+              ]}
+            />
+          </>
         )}
         {sidebarTabs ? <WorkspaceSidebarTabs /> : null}
         {/* The pinned picker already clears the navigation bar; lists must not inset it again. */}
@@ -151,12 +157,31 @@ function WorkspaceRootContent() {
   );
 }
 
+/** Android split views list threads and pull requests in the sidebar; Home is the empty detail. */
+function AndroidSplitDetail() {
+  const workspace = useWorkspaceTabs();
+  if (workspace?.state.selectedTab !== "pullRequests") return <HomeRouteScreen />;
+  return (
+    <>
+      <NativeStackScreenOptions options={{ headerShown: false }} />
+      <AndroidScreenHeader title="Pull requests" />
+      <View className="flex-1 items-center justify-center px-10">
+        <EmptyState
+          title="Select a pull request"
+          detail="Choose a pull request from the sidebar to review it."
+          variant="plain"
+        />
+      </View>
+    </>
+  );
+}
+
 /** Keep workspace state mounted as the native columns expand and collapse. */
 export function WorkspaceRootScreen() {
   const { layout } = useAdaptiveWorkspaceLayout();
   const workspace = useWorkspaceTabs();
   return Platform.OS === "android" && layout.usesSplitView ? (
-    <HomeRouteScreen />
+    <AndroidSplitDetail />
   ) : workspace ? (
     <WorkspaceRootContent />
   ) : (

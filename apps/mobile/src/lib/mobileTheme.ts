@@ -268,7 +268,6 @@ export function createMobileThemeVariables(
     "--color-grouped-card": groupedCard,
     "--color-card-alt": c.surfaceRaised,
     "--color-card-translucent": withAlpha(c.surface, 0.8),
-    "--color-thread-canvas": c.canvas,
     "--color-thread-selected": c.sidebarRowActive,
     "--color-thread-selected-foreground": c.sidebarForeground,
     "--color-thread-selected-foreground-muted": themeColorWithContrast(
@@ -277,7 +276,6 @@ export function createMobileThemeVariables(
     ),
     "--color-thread-hover": c.sidebarRowHover,
     "--color-row-hover": c.toolbarControlHover,
-    "--color-composer-panel": themeColorWithAlpha(c.canvas, appearance === "dark" ? 0.92 : 0.88),
     "--color-composer-surface": themeColorWithAlpha(
       groupedCard,
       appearance === "dark" ? 0.9 : 0.94,

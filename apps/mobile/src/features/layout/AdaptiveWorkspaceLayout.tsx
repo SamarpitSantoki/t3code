@@ -717,7 +717,7 @@ function AdaptiveWorkspaceLayoutContent(
               pointerEvents={navigationRailWidth > 0 ? "auto" : "none"}
               style={railAnimatedStyle}
             >
-              <AndroidWorkspaceNavigation rail onSelect={revealPrimarySidebar} />
+              <AndroidWorkspaceNavigation onSelect={revealPrimarySidebar} />
             </Animated.View>
           ) : null}
           {shouldRenderPrimarySidebar && layout.listPaneWidth !== null ? (

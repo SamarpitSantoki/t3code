@@ -10,6 +10,7 @@ import { defaultMinSize, height, size, width } from "@expo/ui/jetpack-compose/mo
 import { View, type StyleProp, type ViewStyle } from "react-native";
 import { useAndroidControlSizing } from "./useAndroidControlSizing";
 import { useAppearancePreferences } from "../features/settings/appearance/AppearancePreferencesProvider";
+import { useFontFamily } from "../lib/useFontFamily";
 import { useScaledTextRole } from "../features/settings/appearance/useScaledTextRole";
 import { SymbolView, type AppSymbolName } from "./AppSymbol";
 
@@ -25,6 +26,7 @@ export function MaterialFloatingActionButton(props: {
 }) {
   const { themeAppearance, themeVariables: colors } = useAppearancePreferences();
   const typography = useScaledTextRole("footnote");
+  const fontFamily = useFontFamily("medium");
   const { scale, iconSize: standardIconSize, fabSize, largeFabSize } = useAndroidControlSizing();
   const buttonSize = props.variant === "large" ? largeFabSize : fabSize;
   const primary = props.tone === "primary";
@@ -65,7 +67,7 @@ export function MaterialFloatingActionButton(props: {
             </Component.Icon>
             {props.variant === "extended" ? (
               <ExtendedFloatingActionButton.Text>
-                <Text color={contentColor} style={{ ...typography, fontWeight: "500" }}>
+                <Text color={contentColor} style={{ ...typography, fontFamily }}>
                   {props.label}
                 </Text>
               </ExtendedFloatingActionButton.Text>

@@ -1,11 +1,13 @@
 import { useState, type ReactNode } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 
-import type { AppSymbolName } from "./AppSymbol";
+import { SymbolView, type AppSymbolName } from "./AppSymbol";
 import { AppText as Text } from "./AppText";
 import { cn } from "../lib/cn";
-import { MaterialIconButton } from "./MaterialIconButton";
+import { themeColorWithAlpha } from "../lib/mobileTheme";
+import { useAppearancePreferences } from "../features/settings/appearance/AppearancePreferencesProvider";
 import { AndroidAnchoredMenu } from "./AndroidAnchoredMenu";
+import { GlassSurface } from "./GlassSurface";
 import { useScaledTextRole } from "../features/settings/appearance/useScaledTextRole";
 import { useMaterialToolbarLayout } from "./useMaterialToolbarLayout";
 
@@ -18,6 +20,10 @@ export interface AndroidHeaderAction {
   readonly selected?: boolean;
 }
 
+const HEADER_CONTROL_SIZE = 48;
+const HEADER_ICON_SIZE = 22;
+
+/** Round header control; group several inside `AndroidHeaderGlass` to match iOS bar items. */
 export function AndroidHeaderIconButton(props: {
   readonly accessibilityLabel: string;
   readonly icon: AppSymbolName;
@@ -25,7 +31,50 @@ export function AndroidHeaderIconButton(props: {
   readonly disabled?: boolean;
   readonly selected?: boolean;
 }) {
-  return <MaterialIconButton {...props} tintColorClassName="accent-header-foreground" />;
+  const { themeVariables } = useAppearancePreferences();
+  return (
+    <Pressable
+      onPress={props.onPress}
+      disabled={props.disabled}
+      accessibilityLabel={props.accessibilityLabel}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: Boolean(props.disabled), selected: props.selected }}
+      android_ripple={{
+        color: themeColorWithAlpha(themeVariables["--color-header-foreground"], 0.1),
+        borderless: true,
+        radius: HEADER_CONTROL_SIZE / 2,
+      }}
+      className={cn(
+        "items-center justify-center rounded-full",
+        props.selected && "bg-subtle-strong",
+      )}
+      style={{ width: HEADER_CONTROL_SIZE, height: HEADER_CONTROL_SIZE }}
+    >
+      <SymbolView
+        name={props.icon}
+        size={HEADER_ICON_SIZE}
+        tintColorClassName={
+          props.disabled
+            ? "accent-icon-subtle"
+            : props.selected
+              ? "accent-focus"
+              : "accent-header-foreground"
+        }
+      />
+    </Pressable>
+  );
+}
+
+/** Frosted capsule behind header controls, the Android stand-in for iOS glass bar items. */
+export function AndroidHeaderGlass(props: { readonly children: ReactNode }) {
+  return (
+    <GlassSurface
+      className="flex-row items-center"
+      style={{ minWidth: HEADER_CONTROL_SIZE, minHeight: HEADER_CONTROL_SIZE, borderRadius: 24 }}
+    >
+      {props.children}
+    </GlassSurface>
+  );
 }
 
 export function AndroidScreenHeader(props: {
@@ -37,9 +86,8 @@ export function AndroidScreenHeader(props: {
   readonly trailing?: ReactNode;
   readonly onBack?: () => void;
   readonly embedded?: boolean;
-  readonly hideBottomBorder?: boolean;
 }) {
-  const titleTypography = useScaledTextRole("title");
+  const titleTypography = useScaledTextRole("headline");
   const subtitleTypography = useScaledTextRole("label");
   const { height: materialToolbarHeight, ...headerPadding } = useMaterialToolbarLayout(
     props.embedded,
@@ -49,31 +97,34 @@ export function AndroidScreenHeader(props: {
   const directCount = actions.length > 2 ? (headerWidth >= 600 ? 3 : 1) : actions.length;
   const visibleActions = actions.slice(0, directCount);
   const overflowActions = actions.slice(directCount);
+  const hasControls = actions.length > 0 || props.trailing != null;
 
   return (
     <View
       onLayout={(event) => setHeaderWidth(event.nativeEvent.layout.width)}
-      className="border-b border-header-border bg-header px-2"
-      style={{
-        ...headerPadding,
-        borderBottomWidth: props.hideBottomBorder ? 0 : undefined,
-      }}
+      className="bg-header px-3"
+      style={headerPadding}
     >
-      <View style={{ minHeight: materialToolbarHeight }} className="flex-row items-center gap-1">
+      <View style={{ minHeight: materialToolbarHeight }} className="flex-row items-center gap-2">
         {props.onBack ? (
-          <MaterialIconButton
-            accessibilityLabel="Navigate up"
-            icon="arrow.left"
-            tintColorClassName="accent-header-foreground"
-            onPress={props.onBack}
-          />
+          <AndroidHeaderGlass>
+            <AndroidHeaderIconButton
+              accessibilityLabel="Navigate up"
+              icon="arrow.left"
+              onPress={props.onBack}
+            />
+          </AndroidHeaderGlass>
         ) : null}
 
         {props.leading}
 
-        <View className={cn("min-w-0 flex-1", !props.onBack && "pl-1")}>
+        <View className={cn("min-w-0 flex-1", !props.onBack && "pl-2")}>
           {props.titleContent ?? (
-            <Text numberOfLines={1} style={titleTypography} className="text-header-foreground">
+            <Text
+              numberOfLines={1}
+              style={titleTypography}
+              className="font-t3-bold text-header-foreground"
+            >
               {props.title}
             </Text>
           )}
@@ -81,58 +132,62 @@ export function AndroidScreenHeader(props: {
             <Text
               numberOfLines={1}
               style={subtitleTypography}
-              className="mt-px text-[13px] font-t3-medium text-foreground-muted"
+              className="text-[13px] text-foreground-muted"
             >
               {props.subtitle}
             </Text>
           ) : null}
         </View>
 
-        {visibleActions.map((action) =>
-          action.loading ? (
-            <View
-              key={action.accessibilityLabel}
-              accessibilityLabel={action.accessibilityLabel}
-              className="size-12 items-center justify-center"
-            >
-              <ActivityIndicator colorClassName="accent-header-foreground" />
-            </View>
-          ) : (
-            <AndroidHeaderIconButton
-              key={action.accessibilityLabel}
-              accessibilityLabel={action.accessibilityLabel}
-              disabled={action.disabled}
-              selected={action.selected}
-              icon={action.icon}
-              onPress={action.onPress}
-            />
-          ),
-        )}
-        {overflowActions.length > 0 ? (
-          <AndroidAnchoredMenu
-            actions={overflowActions.map((action, index) => ({
-              id: String(index),
-              title: action.accessibilityLabel,
-              attributes: {
-                disabled: Boolean(action.disabled),
-                state: action.selected ? "on" : undefined,
-              },
-            }))}
-            onPressAction={({ nativeEvent }) =>
-              overflowActions[Number(nativeEvent.event)]?.onPress()
-            }
-          >
-            {(open) => (
-              <MaterialIconButton
-                accessibilityLabel="More actions"
-                icon="ellipsis"
-                tintColorClassName="accent-header-foreground"
-                onPress={open}
-              />
+        {hasControls ? (
+          <AndroidHeaderGlass>
+            {visibleActions.map((action) =>
+              action.loading ? (
+                <View
+                  key={action.accessibilityLabel}
+                  accessibilityLabel={action.accessibilityLabel}
+                  className="items-center justify-center"
+                  style={{ width: HEADER_CONTROL_SIZE, height: HEADER_CONTROL_SIZE }}
+                >
+                  <ActivityIndicator colorClassName="accent-header-foreground" />
+                </View>
+              ) : (
+                <AndroidHeaderIconButton
+                  key={action.accessibilityLabel}
+                  accessibilityLabel={action.accessibilityLabel}
+                  disabled={action.disabled}
+                  selected={action.selected}
+                  icon={action.icon}
+                  onPress={action.onPress}
+                />
+              ),
             )}
-          </AndroidAnchoredMenu>
+            {overflowActions.length > 0 ? (
+              <AndroidAnchoredMenu
+                actions={overflowActions.map((action, index) => ({
+                  id: String(index),
+                  title: action.accessibilityLabel,
+                  attributes: {
+                    disabled: Boolean(action.disabled),
+                    state: action.selected ? "on" : undefined,
+                  },
+                }))}
+                onPressAction={({ nativeEvent }) =>
+                  overflowActions[Number(nativeEvent.event)]?.onPress()
+                }
+              >
+                {(open) => (
+                  <AndroidHeaderIconButton
+                    accessibilityLabel="More actions"
+                    icon={{ ios: "ellipsis", android: "more_vert" }}
+                    onPress={open}
+                  />
+                )}
+              </AndroidAnchoredMenu>
+            ) : null}
+            {props.trailing}
+          </AndroidHeaderGlass>
         ) : null}
-        {props.trailing}
       </View>
     </View>
   );

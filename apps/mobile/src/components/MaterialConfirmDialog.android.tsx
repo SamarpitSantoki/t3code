@@ -9,13 +9,15 @@ import {
 
 import { useAppearancePreferences } from "../features/settings/appearance/AppearancePreferencesProvider";
 import { useScaledTextRole } from "../features/settings/appearance/useScaledTextRole";
+import { useFontFamily } from "../lib/useFontFamily";
 import type { MaterialConfirmDialogProps } from "./MaterialConfirmDialog";
 
 export function MaterialConfirmDialog(props: MaterialConfirmDialogProps) {
   const { themeAppearance, themeVariables: colors } = useAppearancePreferences();
-  const titleTypography = useScaledTextRole("title");
-  const bodyTypography = useScaledTextRole("footnote");
-  const inputTypography = useScaledTextRole("body");
+  const fontFamily = useFontFamily("regular");
+  const titleTypography = { ...useScaledTextRole("title"), fontFamily };
+  const bodyTypography = { ...useScaledTextRole("footnote"), fontFamily };
+  const inputTypography = { ...useScaledTextRole("body"), fontFamily };
   const inputState = useNativeState(props.inputInitialValue ?? "");
   const inputSelection = useNativeState({ start: 0, end: props.inputInitialValue?.length ?? 0 });
   const confirm = () => {

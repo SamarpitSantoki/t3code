@@ -11,6 +11,7 @@ import { defaultMinSize, padding, size, width } from "@expo/ui/jetpack-compose/m
 import { View } from "react-native";
 import { resolveScaledTextRole } from "../lib/appearancePreferences";
 
+import { useFontFamily } from "../lib/useFontFamily";
 import { useAndroidControlSizing } from "./useAndroidControlSizing";
 import { useAppearancePreferences } from "../features/settings/appearance/AppearancePreferencesProvider";
 import type { MaterialMenuPopupProps } from "./MaterialMenuPopup";
@@ -51,6 +52,7 @@ export function MaterialMenuPopup(props: MaterialMenuPopupProps) {
   const { scale, menuItemHeight } = useAndroidControlSizing();
   const body = resolveScaledTextRole("body", appearance.baseFontSize);
   const caption = resolveScaledTextRole("caption", appearance.baseFontSize);
+  const fontFamily = useFontFamily("regular");
   const foreground = colors["--color-foreground"];
   const muted = colors["--color-foreground-muted"];
   // A fixed native item height clips wrapped labels; a minimum lets each row grow.
@@ -63,7 +65,7 @@ export function MaterialMenuPopup(props: MaterialMenuPopupProps) {
             <MenuIcon name="arrow.left" />
           </DropdownMenuItem.LeadingIcon>
           <DropdownMenuItem.Text>
-            <Text color={foreground} style={{ typography: "bodyLarge", ...body }}>
+            <Text color={foreground} style={{ typography: "bodyLarge", fontFamily, ...body }}>
               {props.parent.title}
             </Text>
           </DropdownMenuItem.Text>
@@ -71,7 +73,7 @@ export function MaterialMenuPopup(props: MaterialMenuPopupProps) {
       ) : props.title ? (
         <Text
           color={muted}
-          style={{ typography: "bodySmall", ...caption }}
+          style={{ typography: "bodySmall", fontFamily, ...caption }}
           modifiers={[padding(16 * scale, 8 * scale, 16 * scale, 8 * scale)]}
         >
           {props.title}
@@ -96,7 +98,7 @@ export function MaterialMenuPopup(props: MaterialMenuPopupProps) {
           <DropdownMenuItem.Text>
             <Column>
               <Text
-                style={{ typography: "bodyLarge", ...body }}
+                style={{ typography: "bodyLarge", fontFamily, ...body }}
                 color={
                   action.attributes?.disabled
                     ? muted
@@ -108,7 +110,7 @@ export function MaterialMenuPopup(props: MaterialMenuPopupProps) {
                 {action.title}
               </Text>
               {action.subtitle ? (
-                <Text color={muted} style={{ typography: "bodySmall", ...caption }}>
+                <Text color={muted} style={{ typography: "bodySmall", fontFamily, ...caption }}>
                   {action.subtitle}
                 </Text>
               ) : null}
@@ -151,7 +153,12 @@ export function MaterialMenuPopup(props: MaterialMenuPopupProps) {
         height: props.anchor.height,
       }}
     >
-      <DropdownMenu expanded onDismissRequest={props.onClose} color={colors["--color-card-alt"]}>
+      <DropdownMenu
+        expanded
+        onDismissRequest={props.onClose}
+        color={colors["--color-card-alt"]}
+        cornerRadius={16}
+      >
         <DropdownMenu.Trigger>
           <Box modifiers={[size(props.anchor.width, props.anchor.height)]} />
         </DropdownMenu.Trigger>

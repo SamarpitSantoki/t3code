@@ -98,7 +98,6 @@ export function ThreadHeader(
         }
         onBack={layout.usesSplitView ? undefined : returnToList}
         actions={androidHeaderActions}
-        hideBottomBorder
       />
       {native.fallback}
     </>

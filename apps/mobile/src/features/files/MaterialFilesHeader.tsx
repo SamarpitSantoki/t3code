@@ -47,7 +47,6 @@ export function MaterialFilesHeader(props: {
         <AndroidScreenHeader
           title="Files"
           subtitle={props.projectName}
-          hideBottomBorder
           onBack={props.onBack}
           leading={props.leading}
           actions={[

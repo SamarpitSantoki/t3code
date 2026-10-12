@@ -99,7 +99,6 @@ function ReviewHeader(
       title={presentation.title}
       subtitle={presentation.subtitle}
       onBack={props.onReturnToThread}
-      hideBottomBorder
       options={{ headerTintColor: props.iconColor, headerTitle: props.title }}
       backInSplitView={{ accessibilityLabel: "Back to chat", icon: "chevron.left" }}
       actions={
@@ -427,7 +426,6 @@ function ReviewFileNavigator({
         <AndroidScreenHeader
           title="Changed files"
           subtitle={`${files.length} ${files.length === 1 ? "file" : "files"}`}
-          hideBottomBorder
         />
       ) : (
         <View className="border-b border-border" style={{ paddingTop: headerInset }}>

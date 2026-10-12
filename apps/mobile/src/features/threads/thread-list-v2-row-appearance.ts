@@ -1,18 +1,22 @@
-import type { ViewStyle } from "react-native";
+import { Platform, type ViewStyle } from "react-native";
 import type { MobileThemeVariables } from "../../lib/mobileTheme";
 
-export const THREAD_LIST_V2_MONO_FONT = "Menlo";
+// Menlo ships only on Apple platforms.
+export const THREAD_LIST_V2_MONO_FONT = Platform.select({ ios: "Menlo", default: "monospace" });
 export const THREAD_LIST_V2_ROW_CONTENT_CLASS_NAME = "px-5 py-2.5";
 export const THREAD_LIST_V2_ROW_DIVIDERS = true;
+// Android's tablet sidebar keeps its Material inset rows; its list adds no horizontal padding.
+const SIDEBAR_ROW_RADIUS = Platform.OS === "android" ? 20 : 12;
 export const THREAD_LIST_V2_SIDEBAR_ROW_STYLE = {
-  borderRadius: 12,
+  borderRadius: SIDEBAR_ROW_RADIUS,
   paddingHorizontal: 12,
   paddingVertical: 10,
 } satisfies ViewStyle;
-export const THREAD_LIST_V2_SIDEBAR_ROW_CONTAINER_STYLE = {
-  borderRadius: 12,
+export const THREAD_LIST_V2_SIDEBAR_ROW_CONTAINER_STYLE: ViewStyle = {
+  borderRadius: SIDEBAR_ROW_RADIUS,
   overflow: "hidden",
-} satisfies ViewStyle;
+  ...(Platform.OS === "android" ? { marginHorizontal: 8, marginVertical: 2 } : null),
+};
 
 export const selectedThreadRowColors = {
   foregroundClassName: "text-thread-selected-foreground",

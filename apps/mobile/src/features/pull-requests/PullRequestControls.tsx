@@ -7,9 +7,7 @@ import { Platform, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppText as Text } from "../../components/AppText";
 import { SymbolView, type AppSymbolName } from "../../components/AppSymbol";
-import { MaterialButton } from "../../components/MaterialButton";
-import { MaterialIconButton } from "../../components/MaterialIconButton";
-import { MaterialFloatingToolbar } from "./MaterialFloatingToolbar";
+import { GlassSurface } from "../../components/GlassSurface";
 import { ControlPillMenu } from "../../components/ControlPillMenu";
 import { NativeHeaderToolbar } from "../../native/StackHeader";
 import { useNativeLayoutMetrics } from "../../native/native-layout-metrics";
@@ -103,6 +101,74 @@ export function PullRequestCardRow(props: {
   );
 }
 
+const ANDROID_BAR_BUTTON_SIZE = 56;
+const ANDROID_BAR_BOTTOM_GAP = 16;
+const ANDROID_BAR_TOP_GAP = 8;
+const ANDROID_RIPPLE = { color: "rgba(127, 127, 127, 0.25)" } as const;
+
+/** Space the Android floating bar occupies above the bottom inset, before it is measured. */
+export function androidPullRequestBarHeight(bottomInset: number) {
+  return bottomInset + ANDROID_BAR_BUTTON_SIZE + ANDROID_BAR_TOP_GAP + ANDROID_BAR_BOTTOM_GAP;
+}
+
+/** Round glass button matching the iOS bottom toolbar. Inside a menu, the menu owns the press. */
+function AndroidBarIconButton(props: {
+  readonly icon: AppSymbolName;
+  readonly accessibilityLabel: string;
+  readonly disabled?: boolean;
+  readonly onPress?: () => void;
+}) {
+  return (
+    <GlassSurface
+      style={{
+        width: ANDROID_BAR_BUTTON_SIZE,
+        height: ANDROID_BAR_BUTTON_SIZE,
+        borderRadius: ANDROID_BAR_BUTTON_SIZE / 2,
+        opacity: props.disabled ? 0.5 : 1,
+      }}
+    >
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={props.accessibilityLabel}
+        accessibilityState={{ disabled: Boolean(props.disabled) }}
+        android_ripple={ANDROID_RIPPLE}
+        disabled={props.disabled}
+        onPress={props.onPress}
+        className="flex-1 items-center justify-center"
+      >
+        <SymbolView name={props.icon} size={22} tintColorClassName="accent-icon" />
+      </Pressable>
+    </GlassSurface>
+  );
+}
+
+/** Inverted primary pill. Without `onPress`, an enclosing menu handles the tap. */
+function AndroidBarPrimary(props: {
+  readonly label: string;
+  readonly disabled: boolean;
+  readonly onPress?: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={props.label}
+      accessibilityState={{ disabled: props.disabled }}
+      android_ripple={ANDROID_RIPPLE}
+      disabled={props.disabled}
+      onPress={props.onPress}
+      style={{ height: ANDROID_BAR_BUTTON_SIZE, borderRadius: ANDROID_BAR_BUTTON_SIZE / 2 }}
+      className={`min-w-0 flex-1 items-center justify-center overflow-hidden px-5 ${props.disabled ? "bg-subtle-strong" : "bg-prominent-action"}`}
+    >
+      <Text
+        numberOfLines={1}
+        className={`text-[17px] font-t3-bold ${props.disabled ? "text-foreground-muted" : "text-prominent-action-foreground"}`}
+      >
+        {props.label}
+      </Text>
+    </Pressable>
+  );
+}
+
 export function PullRequestActionToolbar(props: {
   readonly pr: PullRequestDetail | null;
   readonly params: PullRequestParams;
@@ -136,60 +202,60 @@ export function PullRequestActionToolbar(props: {
   const primaryDisabled = pendingReview ? false : agent.disabled;
   const showPrimary = pendingReview || canOpenThread;
   if (Platform.OS === "android") {
-    const primary = (
-      <MaterialButton
+    const primaryPill = (
+      <AndroidBarPrimary
         label={primaryLabel}
-        tone="primary"
         disabled={primaryDisabled}
-        onPress={primaryPress}
+        onPress={!pendingReview && chooseThread ? undefined : primaryPress}
       />
     );
     return (
       <View
         pointerEvents="box-none"
-        className="absolute inset-x-0 bottom-0 z-10 items-center px-4 pt-2"
-        style={{ paddingBottom: insets.bottom + 16 }}
+        className="absolute inset-x-0 bottom-0 z-10 px-4 pt-2"
+        style={{ paddingBottom: insets.bottom + ANDROID_BAR_BOTTOM_GAP }}
         onLayout={(event) => props.onHeightChange?.(event.nativeEvent.layout.height)}
       >
-        <MaterialFloatingToolbar>
-          <View className="flex-row items-center gap-2">
-            {showAgentControls ? (
+        <View pointerEvents="box-none" className="flex-row items-center gap-3">
+          {showAgentControls ? (
+            <ControlPillMenu
+              title="AI helpers"
+              actions={agentActions.map((action) => agent.menuAction(action.task))}
+              onPressAction={({ nativeEvent }) => agent.select(nativeEvent.event)}
+            >
+              <View pointerEvents="none">
+                <AndroidBarIconButton
+                  icon="sparkles"
+                  accessibilityLabel="PR agent actions"
+                  disabled={agent.disabled}
+                />
+              </View>
+            </ControlPillMenu>
+          ) : null}
+          {showPrimary ? (
+            !pendingReview && chooseThread ? (
               <ControlPillMenu
-                title="AI helpers"
-                actions={agentActions.map((action) => agent.menuAction(action.task))}
+                className="min-w-0 flex-1"
+                title="Open thread"
+                actions={threadMenuItems}
                 onPressAction={({ nativeEvent }) => agent.select(nativeEvent.event)}
               >
-                <View pointerEvents="none">
-                  <MaterialIconButton
-                    icon="sparkles"
-                    accessibilityLabel="PR agent actions"
-                    disabled={agent.disabled}
-                  />
+                <View pointerEvents="none" className="flex-row">
+                  {primaryPill}
                 </View>
               </ControlPillMenu>
-            ) : null}
-            {showPrimary ? (
-              <View className="min-w-0 shrink">
-                {!pendingReview && chooseThread ? (
-                  <ControlPillMenu
-                    title="Open thread"
-                    actions={threadMenuItems}
-                    onPressAction={({ nativeEvent }) => agent.select(nativeEvent.event)}
-                  >
-                    <View pointerEvents="none">{primary}</View>
-                  </ControlPillMenu>
-                ) : (
-                  primary
-                )}
-              </View>
-            ) : null}
-            <MaterialIconButton
-              icon="file.diff"
-              accessibilityLabel="Changed files"
-              onPress={openFiles}
-            />
-          </View>
-        </MaterialFloatingToolbar>
+            ) : (
+              primaryPill
+            )
+          ) : (
+            <View pointerEvents="none" className="flex-1" />
+          )}
+          <AndroidBarIconButton
+            icon="file.diff"
+            accessibilityLabel="Changed files"
+            onPress={openFiles}
+          />
+        </View>
       </View>
     );
   }

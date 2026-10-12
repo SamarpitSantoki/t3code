@@ -4,21 +4,15 @@ import { mobileHtmlRenderTheme } from "./htmlRenderTheme";
 import { getMobileThemeVariables } from "./mobileTheme";
 
 describe("mobileHtmlRenderTheme", () => {
-  it("paints the page with the feed's own canvas", () => {
-    const variables = {
-      ...getMobileThemeVariables("grove", "dark"),
-      "--color-thread-canvas": "#101010",
-    };
-    const theme = (platform: string) =>
-      mobileHtmlRenderTheme({
-        themeId: "grove",
-        appearance: "dark",
-        variables,
-        systemColors: false,
-        platform,
-      });
-    expect(theme("android").variables["--background"]).toBe("#101010");
-    expect(theme("ios").variables["--background"]).toBe(variables["--color-screen"]);
+  it("paints the page with the screen color on every platform", () => {
+    const variables = getMobileThemeVariables("grove", "dark");
+    const theme = mobileHtmlRenderTheme({
+      themeId: "grove",
+      appearance: "dark",
+      variables,
+      systemColors: false,
+    });
+    expect(theme.variables["--background"]).toBe(variables["--color-screen"]);
   });
 
   it("takes Material You's system roles over the default palette", () => {
@@ -32,7 +26,6 @@ describe("mobileHtmlRenderTheme", () => {
       appearance: "light",
       variables,
       systemColors: true,
-      platform: "android",
     });
     expect(theme.variables["--accent"]).toBe("#6750A4FF");
     expect(theme.variables["--foreground"]).toBe("#1D1B20FF");

@@ -349,7 +349,7 @@ function AppSymbolView(props: AppSymbolViewProps) {
       accessibilityLabel={props.accessibilityLabel}
       color={props.tintColor}
       size={props.size}
-      strokeWidth={2}
+      strokeWidth={1.75}
       style={props.style}
       testID={props.testID}
     />

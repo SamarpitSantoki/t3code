@@ -12,6 +12,7 @@ import { defaultMinSize, fillMaxWidth, size } from "@expo/ui/jetpack-compose/mod
 import { View } from "react-native";
 
 import { useAppearancePreferences } from "../features/settings/appearance/AppearancePreferencesProvider";
+import { useFontFamily } from "../lib/useFontFamily";
 import { useScaledTextRole } from "../features/settings/appearance/useScaledTextRole";
 import type { MaterialButtonProps } from "./MaterialButton";
 import { useAndroidControlSizing } from "./useAndroidControlSizing";
@@ -19,6 +20,7 @@ import { useAndroidControlSizing } from "./useAndroidControlSizing";
 export function MaterialButton(props: MaterialButtonProps) {
   const { themeAppearance, themeVariables: colors } = useAppearancePreferences();
   const typography = useScaledTextRole("footnote");
+  const fontFamily = useFontFamily("medium");
   const { scale, mediumIconSize } = useAndroidControlSizing();
   const tone = props.tone ?? "secondary";
   const Component =
@@ -85,7 +87,7 @@ export function MaterialButton(props: MaterialButtonProps) {
                   <Box modifiers={[size(8 * scale, 1)]} />
                 </>
               ) : null}
-              <Text style={{ ...typography, fontWeight: "500" }}>{props.label}</Text>
+              <Text style={{ ...typography, fontFamily }}>{props.label}</Text>
             </Row>
           </Component>
         </Host>

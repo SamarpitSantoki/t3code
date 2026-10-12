@@ -76,11 +76,7 @@ export function GitBranchesSheet(_props: GitBranchesSheetProps) {
         />
       ) : null}
       {Platform.OS === "android" ? (
-        <AndroidSheetHeader
-          title="Branches & worktrees"
-          onBack={() => navigation.goBack()}
-          hideBottomBorder
-        />
+        <AndroidSheetHeader title="Branches & worktrees" onBack={() => navigation.goBack()} />
       ) : null}
       <MaterialScreenContent fitToContents>
         <ScrollView

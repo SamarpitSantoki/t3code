@@ -9,7 +9,6 @@ import {
   type ViewProps,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useKeyboardState } from "react-native-keyboard-controller";
 
 import { useAndroidControlSizing } from "../../components/useAndroidControlSizing";
 import { androidWorkspaceNavigationColors } from "./android-workspace-navigation-colors";
@@ -38,37 +37,27 @@ function nativeColor(value: string) {
   return typeof color === "number" ? color : 0;
 }
 
-export function AndroidWorkspaceNavigation(props: {
-  readonly rail?: boolean;
-  readonly onSelect?: () => void;
-}) {
+export function AndroidWorkspaceNavigation(props: { readonly onSelect?: () => void }) {
   const workspace = useWorkspaceTabs()!;
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const keyboardVisible = useKeyboardState((state) => state.isVisible);
   const { themeAppearance, themeVariables: colors } = useAppearancePreferences();
   const { scale } = useAndroidControlSizing();
-  const rail = Boolean(props.rail);
   const { containerColor, indicatorColor, selectedColor, unselectedColor } =
-    androidWorkspaceNavigationColors(colors, rail);
-  if (!rail && keyboardVisible) return null;
+    androidWorkspaceNavigationColors(colors, true);
 
   return (
     <View
       style={{
         backgroundColor: containerColor,
-        ...(rail
-          ? {
-              flex: 1,
-              width: ANDROID_WORKSPACE_RAIL_WIDTH * Math.max(1, scale),
-              paddingTop: insets.top,
-              paddingBottom: insets.bottom,
-            }
-          : { paddingBottom: insets.bottom }),
+        flex: 1,
+        width: ANDROID_WORKSPACE_RAIL_WIDTH * Math.max(1, scale),
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
       }}
     >
       <NativeNavigation
-        rail={rail}
+        rail
         selectedTab={workspace.state.selectedTab}
         dark={themeAppearance === "dark"}
         textScale={scale}
@@ -87,7 +76,7 @@ export function AndroidWorkspaceNavigation(props: {
           }
           props.onSelect?.();
         }}
-        style={rail ? { flex: 1 } : { height: 80 * Math.max(1, scale) }}
+        style={{ flex: 1 }}
       />
     </View>
   );

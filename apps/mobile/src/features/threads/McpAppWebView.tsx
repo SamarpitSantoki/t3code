@@ -151,7 +151,6 @@ export function ThreadMcpApp(props: {
         appearance: themeAppearance,
         variables: themeVariables,
         systemColors: systemColorsActive,
-        platform: Platform.OS,
       }),
     [themeId, themeAppearance, themeVariables, systemColorsActive],
   );

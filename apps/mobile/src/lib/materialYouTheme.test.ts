@@ -32,14 +32,14 @@ const palette: MaterialYouPalette = {
 
 describe("Material You system colors", () => {
   it.each(["light", "dark"] as const)(
-    "uses the system surface for the Android frame in %s",
+    "paints Android chrome with the system surface in %s",
     (appearance) => {
       const variables = materialYouPaletteToMobileThemeVariables(
         palette,
         appearance,
         getMobileThemeRuntimeVariables("material-you", appearance, "android"),
       );
-      expect(variables["--color-header"]).toBe(palette.surfaceContainerHigh);
+      expect(variables["--color-header"]).toBe(palette.surface);
     },
   );
 
@@ -51,9 +51,8 @@ describe("Material You system colors", () => {
 
     expect(base).toEqual(snapshot);
     expect(variables["--color-screen"]).toBe(palette.surface);
-    expect(variables["--color-thread-canvas"]).toBe(palette.surfaceContainerLow);
     expect(variables["--color-thread-selected"]).toBe(palette.surfaceContainer);
-    expect(variables["--color-header"]).toBe(palette.surfaceContainerHigh);
+    expect(variables["--color-header"]).toBe(palette.surface);
     expect(variables["--color-grouped-card"]).toBe(palette.surfaceContainer);
     expect(variables["--color-primary"]).toBe(palette.primary);
     expect(variables["--color-placeholder"]).toBe("#1C1B1F9E");

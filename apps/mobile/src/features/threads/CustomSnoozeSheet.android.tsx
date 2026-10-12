@@ -31,6 +31,7 @@ import { AppState, useWindowDimensions } from "react-native";
 
 import { OverlayPortal } from "../../components/OverlayPortal";
 import { useAppearancePreferences } from "../settings/appearance/AppearancePreferencesProvider";
+import { useFontFamily } from "../../lib/useFontFamily";
 import { useScaledTextRole } from "../settings/appearance/useScaledTextRole";
 import type { CustomSnoozeSheet as SharedCustomSnoozeSheet } from "./CustomSnoozeSheet.shared";
 import {
@@ -66,8 +67,9 @@ export function CustomSnoozeSheet(props: Props) {
     });
     return () => subscription.remove();
   }, []);
-  const titleTypography = useScaledTextRole("title");
-  const bodyTypography = useScaledTextRole("footnote");
+  const fontFamily = useFontFamily("regular");
+  const titleTypography = { ...useScaledTextRole("title"), fontFamily };
+  const bodyTypography = { ...useScaledTextRole("footnote"), fontFamily };
   const { width: windowWidth } = useWindowDimensions();
   const [mode, setMode] = useState<CustomSnoozeInput["mode"]>("date");
   const [date, setDate] = useState(() => new Date(Date.now() + 3_600_000));

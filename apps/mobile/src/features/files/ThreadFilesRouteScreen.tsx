@@ -77,7 +77,6 @@ function FilesBrowserHeader(props: {
       title="Files"
       subtitle={props.projectName}
       onBack={props.onBack}
-      hideBottomBorder
       matchSearchSurface
       search={{
         value: props.searchQuery,
@@ -124,7 +123,6 @@ function FileHeader(props: {
       title={props.title}
       subtitle={props.subtitle}
       onBack={props.onBack}
-      hideBottomBorder
       options={{ headerTintColor: props.iconColor, headerTitle: props.title }}
       backInSplitView={
         props.fileInspectorSupported

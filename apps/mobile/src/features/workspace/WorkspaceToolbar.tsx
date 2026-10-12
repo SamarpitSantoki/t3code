@@ -1,4 +1,4 @@
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 import {
   BackHandler,
@@ -21,9 +21,19 @@ import { WorkspaceDock } from "./WorkspaceDock";
 import { useWorkspaceTabs } from "./WorkspaceTabsContext";
 import { WORKSPACE_TOOLBAR, type WorkspaceTab } from "./workspace-tabs-state";
 
-const TABS: ReadonlyArray<{ id: WorkspaceTab; label: string; icon: AppSymbolName }> = [
-  { id: "threads", label: "Threads", icon: "text.bubble" },
-  { id: "pullRequests", label: "PRs", icon: "arrow.triangle.pull" },
+const TABS: ReadonlyArray<{
+  id: WorkspaceTab;
+  label: string;
+  searchLabel: string;
+  icon: AppSymbolName;
+}> = [
+  { id: "threads", label: "Threads", searchLabel: "Search threads", icon: "text.bubble" },
+  {
+    id: "pullRequests",
+    label: "Pull requests",
+    searchLabel: "Search pull requests",
+    icon: "arrow.triangle.pull",
+  },
 ];
 
 function ToolbarButton(props: {
@@ -52,6 +62,7 @@ export function WorkspaceToolbar(props: {
   readonly onNewTask: () => void;
 }) {
   const workspace = useWorkspaceTabs();
+  const navigation = useNavigation();
   const input = useRef<TextInputInstance>(null);
   const [focusRequest, setFocusRequest] = useState(0);
   const insets = useSafeAreaInsets();
@@ -61,15 +72,20 @@ export function WorkspaceToolbar(props: {
   const keyboardVisible = useKeyboardState((state) => state.isVisible);
   const inputStyle = useResolveClassNames("text-foreground font-sans text-base");
   const placeholderStyle = useResolveClassNames("text-foreground-muted");
+  // Home stays mounted under pushed details; only the visible root owns search and Back.
+  const homeFocused = useCallback(() => {
+    const state = navigation.getState();
+    return state?.routes[state.index]?.name === "Home";
+  }, [navigation]);
   const focusSearch = useCallback(() => {
-    if (!workspace) return false;
+    if (!workspace || !homeFocused()) return false;
     const tab = workspace.state.selectedTab;
     if (tab !== "threads" && tab !== "pullRequests") return false;
     workspace.dispatch({ type: "scroll", tab, offset: workspace.getScrollOffset(tab) });
     workspace.dispatch({ type: "search" });
     setFocusRequest((request) => request + 1);
     return true;
-  }, [workspace]);
+  }, [workspace, homeFocused]);
   useHardwareKeyboardCommand("focusSearch", focusSearch);
   useFocusEffect(useCallback(() => () => Keyboard.dismiss(), []));
   const cancelSearch = useCallback(() => {
@@ -82,7 +98,11 @@ export function WorkspaceToolbar(props: {
     workspace?.dispatch({ type: "cancel" });
   }, [workspace]);
   const handleBack = useEffectEvent(() => {
-    if (!workspace || workspace.state.tabs[workspace.state.selectedTab].searchMode === "resting")
+    if (
+      !workspace ||
+      !homeFocused() ||
+      workspace.state.tabs[workspace.state.selectedTab].searchMode === "resting"
+    )
       return false;
     if (keyboardVisible) Keyboard.dismiss();
     else cancelSearch();
@@ -134,8 +154,8 @@ export function WorkspaceToolbar(props: {
                 />
                 <TextInput
                   ref={input}
-                  accessibilityLabel={`Search ${activeTab.label}`}
-                  placeholder={`Search ${activeTab.label === "PRs" ? "pull requests" : "threads"}`}
+                  accessibilityLabel={activeTab.searchLabel}
+                  placeholder={activeTab.searchLabel}
                   placeholderTextColor={placeholderStyle.color}
                   value={tab.query}
                   onChangeText={(query) => dispatch({ type: "query", query })}

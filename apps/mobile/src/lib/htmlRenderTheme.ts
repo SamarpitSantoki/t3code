@@ -20,7 +20,6 @@ export function mobileHtmlRenderTheme(input: {
   readonly appearance: MobileThemeAppearance;
   readonly variables: MobileThemeVariables;
   readonly systemColors: boolean;
-  readonly platform: string;
 }) {
   const { variables: v } = input;
   const palette = getMobileThemeColors(
@@ -56,7 +55,6 @@ export function mobileHtmlRenderTheme(input: {
         }
       : palette,
   );
-  // Android paints the thread on its own canvas role; iOS uses the screen.
-  const canvas = v[input.platform === "android" ? "--color-thread-canvas" : "--color-screen"];
+  const canvas = v["--color-screen"];
   return htmlRenderTheme({ ...colors, canvas }, input.appearance, HTML_RENDER_DEFAULT_FONTS);
 }

@@ -55,7 +55,7 @@ describe("workspace root navigation", () => {
 
   it("reserves space for both Android toolbar rows when expanded", () => {
     expect(workspaceToolbarHeight("expanded")).toBeGreaterThan(
-      workspaceToolbarHeight("resting") * 2,
+      workspaceToolbarHeight("resting") + workspaceToolbarHeight("active"),
     );
   });
 

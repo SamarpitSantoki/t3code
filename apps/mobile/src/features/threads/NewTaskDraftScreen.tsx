@@ -51,7 +51,6 @@ import {
   ComposerToolbarRow,
 } from "../../components/ComposerToolbar";
 import { AndroidScreenHeader } from "../../components/AndroidScreenHeader";
-import { MaterialScreenContent } from "../../components/MaterialScreenContent";
 import { ComposerAttachmentButton } from "../../components/ComposerAttachmentButton";
 import { ComposerAttachmentStrip } from "../../components/ComposerAttachmentStrip";
 import { composerStripAttachments } from "../../lib/composerImages";
@@ -1394,15 +1393,11 @@ export function NewTaskDraftScreen(props: {
 
   if (!selectedProject) {
     return (
-      <View className="flex-1 bg-sheet" collapsable={false}>
+      <View className="flex-1 bg-sheet android:bg-screen" collapsable={false}>
         {Platform.OS === "android" ? (
           <>
             <NativeStackScreenOptions options={{ headerShown: false }} />
-            <AndroidScreenHeader
-              title="New thread"
-              hideBottomBorder
-              onBack={() => navigation.goBack()}
-            />
+            <AndroidScreenHeader title="New thread" onBack={() => navigation.goBack()} />
           </>
         ) : (
           <NativeStackScreenOptions options={{ title: "Loading task" }} />
@@ -1647,9 +1642,7 @@ export function NewTaskDraftScreen(props: {
 
   const composerDock = (
     <View
-      className={
-        Platform.OS === "android" ? "bg-sheet-solid px-[12px] pt-1" : "bg-sheet px-[12px] pt-1"
-      }
+      className="bg-sheet px-[12px] pt-1 android:bg-screen"
       style={{ paddingBottom: controlsBottomPadding }}
     >
       {!voiceInput.isBusy &&
@@ -1869,10 +1862,10 @@ export function NewTaskDraftScreen(props: {
 
   if (isAndroid) {
     return (
-      <View className="flex-1 bg-sheet" collapsable={false}>
+      <View className="flex-1 bg-screen" collapsable={false}>
         <NativeStackScreenOptions options={{ headerShown: false }} />
-        <AndroidScreenHeader title="New thread" hideBottomBorder onBack={closeNewTask} />
-        <MaterialScreenContent>
+        <AndroidScreenHeader title="New thread" onBack={closeNewTask} />
+        <View className="flex-1" collapsable={false}>
           {heroViewport}
 
           <KeyboardStickyView
@@ -1881,7 +1874,7 @@ export function NewTaskDraftScreen(props: {
           >
             {composerDock}
           </KeyboardStickyView>
-        </MaterialScreenContent>
+        </View>
       </View>
     );
   }

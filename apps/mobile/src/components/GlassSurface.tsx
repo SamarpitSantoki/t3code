@@ -12,6 +12,7 @@ import { withUniwind } from "uniwind";
 
 import { cn } from "../lib/cn";
 import { useAppearancePreferences } from "../features/settings/appearance/AppearancePreferencesProvider";
+import { themeColorWithAlpha } from "../lib/mobileTheme";
 import { GlassBackdrop } from "./GlassBackdrop";
 
 // Explicit mappings keep the native glassEffectStyle enum out of style-array conversion.
@@ -46,10 +47,14 @@ export function GlassSurface({
   style,
   ...props
 }: GlassSurfaceProps) {
-  const { themeAppearance } = useAppearancePreferences();
+  const { themeAppearance, themeVariables } = useAppearancePreferences();
   const isDarkMode = themeAppearance === "dark";
   const supportsGlass = Platform.OS === "ios" && isGlassEffectAPIAvailable();
-  const hasShadow = chrome !== "none" && Platform.OS !== "android";
+  const hasShadow = chrome !== "none";
+  const isAndroid = Platform.OS === "android";
+  // Android has no live blur, so glass is a static frost: an opaque fill gives
+  // elevation an outline to cast from, and nothing repaints while content scrolls.
+  const androidFill = fallbackColor ?? themeVariables["--color-glass-fallback"];
   const surfaceStyle: ViewStyle = {
     borderRadius: 32,
     overflow: "hidden",
@@ -57,7 +62,10 @@ export function GlassSurface({
     shadowOpacity: hasShadow ? (isDarkMode ? 0.22 : 0.08) : 0,
     shadowRadius: hasShadow ? 28 : 0,
     shadowOffset: { width: 0, height: hasShadow ? 14 : 0 },
-    elevation: hasShadow ? 12 : 0,
+    elevation: hasShadow ? (isAndroid ? 6 : 12) : 0,
+    ...(isAndroid && hasShadow && typeof androidFill === "string"
+      ? { backgroundColor: themeColorWithAlpha(androidFill, 1) }
+      : null),
   };
 
   if (supportsGlass) {

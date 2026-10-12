@@ -9,7 +9,7 @@ import {
   type HtmlRenderTheme,
 } from "@t3tools/shared/htmlRender";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Platform, Pressable, View, type ColorValue } from "react-native";
+import { ActivityIndicator, Pressable, View, type ColorValue } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 
 import { SymbolView } from "../../components/AppSymbol";
@@ -37,7 +37,6 @@ function useHtmlRenderTheme() {
         appearance: themeAppearance,
         variables: themeVariables,
         systemColors: systemColorsActive,
-        platform: Platform.OS,
       }),
     [themeId, themeAppearance, themeVariables, systemColorsActive],
   );

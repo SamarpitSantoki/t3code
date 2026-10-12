@@ -166,13 +166,17 @@ const GLASS_HEADER_OPTIONS: AppScreenOptions = {
   headerShadowVisible: false,
   headerShown: true,
   headerStyle: NATIVE_LIQUID_GLASS_SUPPORTED ? { backgroundColor: "transparent" } : undefined,
-  headerTitleStyle: { fontSize: 18, fontWeight: "800" },
+  // Android has no synthetic 800 weight for DM Sans; name the bold face instead of falling back to Roboto.
+  headerTitleStyle:
+    Platform.OS === "android"
+      ? { fontSize: 18, fontFamily: "DMSans-Bold" }
+      : { fontSize: 18, fontWeight: "800" },
   headerTransparent: NATIVE_LIQUID_GLASS_SUPPORTED,
   scrollEdgeEffects: NATIVE_LIQUID_GLASS_SUPPORTED ? HEADER_SCROLL_EDGE_EFFECTS : undefined,
   unstable_navigationItemStyle: NATIVE_LIQUID_GLASS_SUPPORTED ? "editor" : undefined,
 };
 
-// Android PR screens render their own Material toolbar.
+// Android PR screens render their own JS header.
 const PULL_REQUEST_HEADER_OPTIONS: AppScreenOptions = {
   ...GLASS_HEADER_OPTIONS,
   headerShown: Platform.OS !== "android",
@@ -724,6 +728,8 @@ const RootStackConfig = createWorkspaceStackNavigator({
         contentStyle: { backgroundColor: "transparent" },
         headerBackVisible: false,
         ...getCompactBrandHeaderOptions(),
+        // Android draws the workspace header in JS.
+        headerShown: Platform.OS !== "android",
       },
     }),
     PullRequest: createNativeStackScreen({

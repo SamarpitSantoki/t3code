@@ -11,7 +11,7 @@ import { useMaterialToolbarLayout } from "./useMaterialToolbarLayout";
 import { NativeStackScreenOptions } from "../native/StackHeader";
 import { AndroidWorkspaceSidebarButton } from "../features/layout/workspace-sidebar-toolbar";
 import { useAppearancePreferences } from "../features/settings/appearance/AppearancePreferencesProvider";
-import { AndroidScreenHeader } from "./AndroidScreenHeader";
+import { AndroidHeaderGlass, AndroidScreenHeader } from "./AndroidScreenHeader";
 import { ScreenHeaderButton } from "./ScreenHeaderButton.android";
 import { SymbolView } from "./AppSymbol";
 import { ControlPillMenu } from "./ControlPill";
@@ -23,7 +23,7 @@ import { useAndroidControlSizing } from "./useAndroidControlSizing";
 export function ScreenHeader(props: ScreenHeaderProps) {
   const { search } = props;
   const { paddingTop, paddingBottom } = useMaterialToolbarLayout();
-  const { scale, buttonSize, iconSize, smallIconSize } = useAndroidControlSizing();
+  const { scale, buttonSize, smallIconSize } = useAndroidControlSizing();
   const { themeVariables } = useAppearancePreferences();
   const inputRef = useRef<TextInputInstance>(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -89,31 +89,16 @@ export function ScreenHeader(props: ScreenHeaderProps) {
     return (
       <>
         {options}
-        <View
-          className="border-b border-header-border bg-header px-3"
-          style={{
-            paddingTop,
-            paddingBottom: 8.75 * scale,
-            borderBottomWidth: 0,
-          }}
-        >
+        <View className="bg-header px-3" style={{ paddingTop, paddingBottom: 8.75 * scale }}>
           <View className="flex-row items-center gap-2" style={{ minHeight: buttonSize }}>
             {props.onBack ? (
-              <Pressable
-                accessibilityLabel="Navigate up"
-                accessibilityRole="button"
-                hitSlop={8}
-                onPress={props.onBack}
-                className="items-center justify-center"
-                style={{ width: buttonSize, height: buttonSize }}
-              >
-                <SymbolView
-                  name="chevron.left"
-                  size={iconSize}
-                  tintColorClassName="accent-header-foreground"
-                  type="monochrome"
+              <AndroidHeaderGlass>
+                <ScreenHeaderButton
+                  accessibilityLabel="Navigate up"
+                  icon="arrow.left"
+                  onPress={props.onBack}
                 />
-              </Pressable>
+              </AndroidHeaderGlass>
             ) : null}
             <View
               className="flex-1 flex-row items-center bg-input"
@@ -157,7 +142,6 @@ export function ScreenHeader(props: ScreenHeaderProps) {
       subtitle={props.subtitle}
       onBack={props.onBack}
       leading={props.sidebar !== false ? <AndroidWorkspaceSidebarButton /> : undefined}
-      hideBottomBorder={props.hideBottomBorder}
       actions={
         search
           ? [
@@ -180,10 +164,12 @@ export function ScreenHeader(props: ScreenHeaderProps) {
           : props.actions
       }
       trailing={
-        <>
-          {menuView}
-          {props.trailing}
-        </>
+        menuView?.length || props.trailing ? (
+          <>
+            {menuView}
+            {props.trailing}
+          </>
+        ) : undefined
       }
     />
   );

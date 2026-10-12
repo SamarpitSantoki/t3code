@@ -82,11 +82,22 @@ export function workspaceTabsReducer(
   return { ...state, tabs: { ...state.tabs, [tab]: next } };
 }
 
+/** Android's floating search row; `height` is the search field and its round buttons. */
 export const WORKSPACE_TOOLBAR = { height: 48, expandedGap: 10, edge: 16, gap: 8 };
-export const WORKSPACE_DOCK = { height: 48, tabsWidth: 176, gap: 12, bottomGap: 6 };
+export const WORKSPACE_DOCK = { height: 48, bottomGap: 6 };
+/** Android's floating tab pill and compose button, sized like the iOS 26 tab bar. */
+export const ANDROID_WORKSPACE_DOCK = { height: 56, tabsWidth: 196, gap: 12 };
 
+/** Height of Android's floating bottom controls: the dock, the search row, or both. */
 export function workspaceToolbarHeight(mode: WorkspaceSearchMode): number {
-  return mode === "expanded"
-    ? WORKSPACE_TOOLBAR.height * 2 + WORKSPACE_TOOLBAR.expandedGap
-    : WORKSPACE_TOOLBAR.height;
+  switch (mode) {
+    case "resting":
+      return ANDROID_WORKSPACE_DOCK.height;
+    case "active":
+      return WORKSPACE_TOOLBAR.height;
+    case "expanded":
+      return (
+        WORKSPACE_TOOLBAR.height + WORKSPACE_TOOLBAR.expandedGap + ANDROID_WORKSPACE_DOCK.height
+      );
+  }
 }

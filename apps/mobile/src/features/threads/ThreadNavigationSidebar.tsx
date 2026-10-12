@@ -975,9 +975,7 @@ function ThreadNavigationSidebarPane(
   return (
     <View
       testID="thread-navigation-sidebar"
-      className={
-        Platform.OS === "android" ? "flex-1 bg-header" : "flex-1 border-r border-border bg-drawer"
-      }
+      className="flex-1 border-r border-border bg-drawer"
       style={{ width: props.width }}
     >
       <View

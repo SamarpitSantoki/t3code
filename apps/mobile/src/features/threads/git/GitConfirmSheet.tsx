@@ -130,11 +130,7 @@ export function GitConfirmSheet(props: GitConfirmSheetProps) {
         />
       ) : null}
       {Platform.OS === "android" ? (
-        <AndroidSheetHeader
-          title="Confirm action"
-          onBack={() => navigation.goBack()}
-          hideBottomBorder
-        />
+        <AndroidSheetHeader title="Confirm action" onBack={() => navigation.goBack()} />
       ) : (
         <View className="min-h-4 pt-2" />
       )}

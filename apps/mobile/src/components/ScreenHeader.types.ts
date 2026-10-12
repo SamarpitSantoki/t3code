@@ -68,7 +68,6 @@ export interface ScreenHeaderProps {
     readonly separateBackground?: boolean;
     readonly onPress?: () => void;
   };
-  readonly hideBottomBorder?: boolean;
   readonly trailing?: ReactNode;
   /** Search scenes use sheet colors on iOS and header colors on Android. */
   readonly matchSearchSurface?: boolean;

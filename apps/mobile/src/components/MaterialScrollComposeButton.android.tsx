@@ -11,6 +11,7 @@ import { useCallback, useState } from "react";
 import { Pressable, View, type StyleProp, type ViewStyle } from "react-native";
 import { useAndroidControlSizing } from "./useAndroidControlSizing";
 import { useAppearancePreferences } from "../features/settings/appearance/AppearancePreferencesProvider";
+import { useFontFamily } from "../lib/useFontFamily";
 import { resolveScaledTextRole } from "../lib/appearancePreferences";
 
 /** Keep the animated width and icon positioning entirely inside Compose, not Yoga. */
@@ -22,6 +23,7 @@ export function MaterialScrollComposeButton(props: {
 }) {
   const { appearance, themeAppearance, themeVariables: colors } = useAppearancePreferences();
   const typography = resolveScaledTextRole("footnote", appearance.baseFontSize);
+  const fontFamily = useFontFamily("medium");
   const { iconSize, fabSize } = useAndroidControlSizing();
   // Scale the native 56dp minimum; keep text and icons at their requested sizes.
   const nativeSize = Math.max(56, fabSize);
@@ -75,7 +77,7 @@ export function MaterialScrollComposeButton(props: {
                   style={{
                     fontSize: typography.fontSize / scale,
                     lineHeight: typography.lineHeight / scale,
-                    fontWeight: "500",
+                    fontFamily,
                   }}
                 >
                   New thread

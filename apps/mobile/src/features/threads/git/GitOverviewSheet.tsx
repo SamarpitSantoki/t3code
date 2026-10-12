@@ -554,7 +554,6 @@ function GitOverviewSheetContent(props: GitOverviewSheetProps) {
       ) : (
         <AndroidSheetHeader
           title={currentBranchLabel}
-          hideBottomBorder={Platform.OS === "android"}
           subtitle={currentStatusSummary}
           onBack={() => navigation.goBack()}
           trailing={Platform.OS === "android" ? refreshMenu : undefined}

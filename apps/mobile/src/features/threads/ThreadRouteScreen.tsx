@@ -111,11 +111,7 @@ function firstRouteParam(value: string | string[] | undefined): string | null {
 }
 
 function ThreadPane(props: { readonly children: ReactNode }) {
-  return (
-    <View className="flex-1 bg-screen android:overflow-hidden android:rounded-t-[28px] android:bg-thread-canvas">
-      {props.children}
-    </View>
-  );
+  return <View className="flex-1 bg-screen">{props.children}</View>;
 }
 
 function ThreadRouteFallbackLayout(props: { readonly children: ReactNode }) {
@@ -130,7 +126,6 @@ function ThreadRouteFallbackLayout(props: { readonly children: ReactNode }) {
         title="Thread"
         options={{ contentStyle: { backgroundColor: themeVariables["--color-header"] } }}
         onBack={layout.usesSplitView ? undefined : returnToList}
-        hideBottomBorder
       />
       <ThreadPane>{props.children}</ThreadPane>
     </>
@@ -176,7 +171,7 @@ function ThreadUnavailableScreen(props: {
           paddingHorizontal: 24,
           paddingVertical: 32,
         }}
-        className="bg-screen flex-1 android:bg-transparent"
+        className="bg-screen flex-1"
       >
         <EmptyState
           title="Thread unavailable"

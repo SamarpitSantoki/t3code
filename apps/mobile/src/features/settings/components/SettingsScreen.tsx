@@ -25,7 +25,6 @@ export function SettingsScreen(
         trailing={Platform.OS === "android" ? props.trailing : undefined}
         sidebar={false}
         onBack={() => navigation.goBack()}
-        hideBottomBorder={!props.formSheet}
       />
       {props.formSheet ? (
         props.children

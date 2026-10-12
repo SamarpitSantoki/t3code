@@ -1370,7 +1370,6 @@ function ThreadSettingsModelsScreen() {
           }
           onBack={presentation.onClose}
           title="Thread settings"
-          hideBottomBorder
         />
       ) : null}
       <NativeStackScreenOptions
@@ -1495,11 +1494,7 @@ function ThreadSettingsChoiceScreen() {
     <>
       <NativeStackScreenOptions options={{ headerShown: Platform.OS !== "android" }} />
       {Platform.OS === "android" ? (
-        <AndroidScreenHeader
-          title={route.params.title}
-          onBack={() => navigation.goBack()}
-          hideBottomBorder
-        />
+        <AndroidScreenHeader title={route.params.title} onBack={() => navigation.goBack()} />
       ) : null}
       <MaterialScreenContent>
         <ThreadSettingsChoiceContent

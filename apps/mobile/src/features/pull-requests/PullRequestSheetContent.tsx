@@ -39,7 +39,6 @@ export function PullRequestSheetContent(props: {
         <AndroidSheetHeader
           title={props.title}
           subtitle={props.subtitle}
-          hideBottomBorder
           leading={
             <MaterialIconButton
               icon="arrow.left"

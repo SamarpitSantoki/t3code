@@ -95,11 +95,7 @@ export function GitCommitSheet(_props: GitCommitSheetProps) {
         />
       ) : null}
       {Platform.OS === "android" ? (
-        <AndroidSheetHeader
-          title="Commit changes"
-          onBack={() => navigation.goBack()}
-          hideBottomBorder
-        />
+        <AndroidSheetHeader title="Commit changes" onBack={() => navigation.goBack()} />
       ) : null}
       <MaterialScreenContent fitToContents>
         <ScrollView
