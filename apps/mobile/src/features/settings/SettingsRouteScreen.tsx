@@ -1,3 +1,4 @@
+import { useSetTotsClassic } from "../tots/use-tots-classic";
 import {
   navigationCustomizationAvailable,
   overflowNavigationTabs,
@@ -15,7 +16,7 @@ import { useWorkspaceTabs } from "../workspace/WorkspaceTabsContext";
 import { ScreenScrollView as ScrollView } from "../../components/ui/ScreenScrollView";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { useAuth, useUser } from "@clerk/expo";
-import { useNavigation, useNavigationState } from "@react-navigation/native";
+import { StackActions, useNavigation, useNavigationState } from "@react-navigation/native";
 import { use, useMemo, type ComponentProps } from "react";
 import { Platform, View } from "react-native";
 import { useWorkspaceSurface } from "../workspace/useWorkspaceSurface";
@@ -157,8 +158,24 @@ function SettingsList(props: { readonly connections: readonly SettingsListRow[] 
   const query = workspace?.state.tabs.settings.query ?? "";
   const overflowRows = useOverflowRows();
   const indexSections = useSettingsIndexSections();
+  const setClassic = useSetTotsClassic();
+  const navigation = useNavigation();
+  const totsRow: SettingsListRow = {
+    id: "tots",
+    icon: "sparkles",
+    label: "Back to Tots",
+    onPress: () => {
+      setClassic(false);
+      if (navigation.canGoBack()) navigation.dispatch(StackActions.popToTop());
+    },
+  };
   const sections = filterSettingsSections(
-    [{ rows: overflowRows }, { title: "Connections", rows: props.connections }, ...indexSections],
+    [
+      { rows: [totsRow] },
+      { rows: overflowRows },
+      { title: "Connections", rows: props.connections },
+      ...indexSections,
+    ],
     query,
   );
 

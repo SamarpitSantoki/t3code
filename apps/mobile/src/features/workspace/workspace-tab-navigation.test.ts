@@ -69,6 +69,14 @@ describe("opening a workspace tab", () => {
     ]);
   });
 
+  it("opens single-page tabs on the list alone, even with columns and remembered pages", () => {
+    const state = { routes: [home, thread] };
+    const selections = { threads: thread.params, pullRequests: pullRequest.params };
+    for (const tab of ["bots", "usage"] as const) {
+      expect(names(workspaceTabNavigationState(state, tab, selections, columns))).toEqual(["Home"]);
+    }
+  });
+
   it("keeps the route that is already open, so re-selecting a tab doesn't rebuild it", () => {
     const next = workspaceTabNavigationState(
       { routes: [home, thread] },

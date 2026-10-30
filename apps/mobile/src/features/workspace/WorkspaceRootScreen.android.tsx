@@ -1,4 +1,6 @@
 import { WorkspaceNoTabs } from "./WorkspaceNoTabs";
+import { TotsHome } from "../tots/TotsHome";
+import { useTotsClassic } from "../tots/use-tots-classic";
 import { useEnabledNavigationTabs } from "./navigation-tabs";
 import { NAVIGATION_TAB_ORDER } from "./navigation-tab-order";
 import { WorkspaceExtraTab } from "./WorkspaceExtraTab";
@@ -21,7 +23,7 @@ import type { WorkspaceTab } from "./workspace-tabs-state";
 
 const TABS: readonly WorkspaceTab[] = NAVIGATION_TAB_ORDER;
 
-export function WorkspaceRootScreen() {
+function ClassicWorkspaceRootScreen() {
   const { layout, startNewTask } = useAdaptiveWorkspaceLayout();
   const workspace = useWorkspaceTabs()!;
   const enabled = useEnabledNavigationTabs();
@@ -99,4 +101,8 @@ export function WorkspaceRootScreen() {
       </View>
     </WorkspaceTabsContext>
   );
+}
+
+export function WorkspaceRootScreen() {
+  return useTotsClassic() ? <ClassicWorkspaceRootScreen /> : <TotsHome />;
 }

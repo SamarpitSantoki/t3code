@@ -69,6 +69,19 @@ const RELEASE_ASSETS = {
   androidNotificationColor: "#FFFFFF",
 } as const;
 
+const TOTS_ASSETS = {
+  appIcon: "./assets/tots/icon-1024.png",
+  iosIcon: "./assets/tots/icon-1024.png",
+  splashIcon: "./assets/tots/splash-icon.png",
+  androidAdaptiveForeground: "./assets/tots/android-icon-foreground.png",
+  androidAdaptiveBackgroundColor: "#121212",
+  androidAdaptiveBackgroundImage: undefined,
+  androidSplashIcon: "./assets/tots/splash-icon.png",
+  androidMonochromeIcon: "./assets/tots/android-icon-monochrome.png",
+  androidNotificationIcon: "./assets/tots/notification-icon.png",
+  androidNotificationColor: "#7C5CFF",
+} as const;
+
 const VARIANT_CONFIG = {
   development: {
     appName: "T3 Code Dev",
@@ -107,7 +120,16 @@ function resolveAppVariant(value: string | undefined): AppVariant {
   }
 }
 
-const variant = VARIANT_CONFIG[APP_VARIANT];
+// The Tots fork keeps T3's variants but swaps in its own icons.
+const variant =
+  repoEnv.T3CODE_BRAND === "tots"
+    ? { ...VARIANT_CONFIG[APP_VARIANT], assets: TOTS_ASSETS }
+    : VARIANT_CONFIG[APP_VARIANT];
+// Forks build under their own Expo account; a separate package installs beside the official app.
+const easOwner = repoEnv.T3CODE_EAS_OWNER?.trim() || "pingdotgg";
+const easProjectId =
+  repoEnv.T3CODE_EAS_PROJECT_ID?.trim() || "d763fcb8-d37c-41ea-a773-b54a0ab4a454";
+const androidPackage = repoEnv.T3CODE_ANDROID_PACKAGE?.trim() || variant.androidPackage;
 const iosBundleIdentifier = isIosPersonalTeamBuild
   ? personalTeamBundleIdentifier!
   : variant.iosBundleIdentifier;
@@ -216,7 +238,7 @@ const sharingPlugin: NonNullable<ExpoConfig["plugins"]>[number] = [
 // Match iOS PostScript names on Android so RN and the native composer share fonts before runtime loading.
 
 const config: ExpoConfig = {
-  name: variant.appName,
+  name: repoEnv.T3CODE_APP_NAME?.trim() || variant.appName,
   slug: "t3-code",
   platforms: ["ios", "android"],
   scheme: variant.scheme,
@@ -230,7 +252,7 @@ const config: ExpoConfig = {
   userInterfaceStyle: "automatic",
   updates: {
     enabled: repoEnv.T3CODE_MOBILE_UPDATES_ENABLED !== "0",
-    url: "https://u.expo.dev/d763fcb8-d37c-41ea-a773-b54a0ab4a454",
+    url: `https://u.expo.dev/${easProjectId}`,
     checkAutomatically: "ON_LOAD",
     fallbackToCacheTimeout: 0,
   },
@@ -278,7 +300,7 @@ const config: ExpoConfig = {
   },
   android: {
     icon: variant.assets.appIcon,
-    package: variant.androidPackage,
+    package: androidPackage,
     ...(repoEnv.T3CODE_ANDROID_GOOGLE_SERVICES_FILE
       ? { googleServicesFile: repoEnv.T3CODE_ANDROID_GOOGLE_SERVICES_FILE }
       : {}),
@@ -449,10 +471,10 @@ const config: ExpoConfig = {
       tracesToken: repoEnv.EXPO_PUBLIC_OTLP_TRACES_TOKEN ?? null,
     },
     eas: {
-      projectId: "d763fcb8-d37c-41ea-a773-b54a0ab4a454",
+      projectId: easProjectId,
     },
   },
-  owner: "pingdotgg",
+  owner: easOwner,
   experiments: {
     // Metro only runs babel-plugin-react-compiler when this is set; see src/reactCompilerCoverage.test.ts.
     reactCompiler: true,

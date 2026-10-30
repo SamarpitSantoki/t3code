@@ -56,6 +56,23 @@
         "image": "macos-tahoe-26.6-xcode-27.1"
       }
     },
+    "tots-apk": {
+      "corepack": true,
+      "node": "26.12.1",
+      "env": {
+        "APP_VARIANT": "preview",
+        "NODE_OPTIONS": "--max-old-space-size=4096",
+        "T3CODE_ANDROID_PACKAGE": "com.example.tots",
+        "T3CODE_APP_NAME": "Tots",
+        "ORG_GRADLE_PROJECT_reactNativeArchitectures": "arm64-v8a",
+        "T3CODE_BRAND": "tots"
+      },
+      "channel": "bots",
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
     "testflight": {
       "extends": "production",
       "env": {

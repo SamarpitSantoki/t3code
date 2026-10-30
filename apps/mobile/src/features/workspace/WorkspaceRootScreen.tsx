@@ -1,4 +1,6 @@
 import { WorkspaceNoTabs } from "./WorkspaceNoTabs";
+import { TotsHome } from "../tots/TotsHome";
+import { useTotsClassic } from "../tots/use-tots-classic";
 import { WORKSPACE_TAB_LABELS, useEnabledNavigationTabs } from "./navigation-tabs";
 import { WorkspaceExtraTab } from "./WorkspaceExtraTab";
 import { SettingsRouteScreen } from "../settings/SettingsRouteScreen";
@@ -36,6 +38,7 @@ import {
   WORKSPACE_DOCK,
   workspaceDockBottomClearance,
   workspaceToolbarHeight,
+  workspaceUsesColumns,
 } from "./workspace-tabs-state";
 import { WorkspaceSidebarTabs } from "./WorkspaceSidebarTabs";
 import {
@@ -108,7 +111,7 @@ function WorkspaceRootContent() {
   const settingsOpen = workspace.settingsOpen;
   const tab = state.tabs[settingsOpen ? "settings" : state.selectedTab];
   const bottomClearance =
-    layout.primarySidebarOverlaysContent && state.selectedTab === "usage"
+    layout.primarySidebarOverlaysContent && !workspaceUsesColumns(state.selectedTab)
       ? workspaceDockBottomClearance({ bottomInset: insets.bottom, keyboardHeight })
       : Platform.OS === "ios" && isDuoDevice(deviceType)
         ? // The column's safe area already holds the Duo's search toolbar and keyboard.
@@ -162,7 +165,7 @@ function WorkspaceRootContent() {
               // Beside a detail column the tab bar names the tab and the detail header the page,
               // so the sidebar keeps the brand.
               headerTitle:
-                sidebarNavigation || (!settingsOpen && state.selectedTab !== "usage")
+                sidebarNavigation || (!settingsOpen && workspaceUsesColumns(state.selectedTab))
                   ? renderHeaderTitle
                   : undefined,
             }}
@@ -227,7 +230,7 @@ function WorkspaceRootContent() {
   );
 }
 
-export function WorkspaceRootScreen() {
+function ClassicWorkspaceRootScreen() {
   const { layout } = useAdaptiveWorkspaceLayout();
   const workspace = useWorkspaceTabs();
   return Platform.OS === "android" && layout.usesSplitView ? (
@@ -239,4 +242,8 @@ export function WorkspaceRootScreen() {
       <WorkspaceRootContent />
     </WorkspaceTabsProvider>
   );
+}
+
+export function WorkspaceRootScreen() {
+  return useTotsClassic() ? <ClassicWorkspaceRootScreen /> : <TotsHome />;
 }

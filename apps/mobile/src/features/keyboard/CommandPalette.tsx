@@ -82,6 +82,7 @@ const ACTION_ICONS: Record<string, AppSymbolName> = {
   appearance: "paintbrush",
   environments: "desktopcomputer",
   usage: "chart.bar.xaxis",
+  bots: "person.2",
   archive: "archivebox",
   files: "doc.text",
   terminal: "terminal",
@@ -315,6 +316,13 @@ export function CommandPalette(props: {
         title: "Usage",
         searchTerms: ["limits", "accounts", "quota"],
         run: () => openSettings(navigation, "SettingsUsage"),
+      },
+      {
+        key: "bots",
+        kind: "action",
+        title: "Bots",
+        searchTerms: ["agents", "automations"],
+        run: () => selectTab("bots"),
       },
       {
         key: "archive",

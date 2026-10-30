@@ -90,6 +90,17 @@ import {
 } from "./features/threads/ThreadSettingsSheet";
 import { NewTaskFlowProvider } from "./features/threads/new-task-flow-provider";
 import { NewTaskRouteScreen } from "./features/threads/NewTaskRouteScreen";
+import { BotNewScreen } from "./features/bots/BotNewScreen";
+import { BotTeamNewScreen } from "./features/bots/BotTeamNewScreen";
+import { BotTeamScreen } from "./features/bots/BotTeamScreen";
+import { BotProfileScreen } from "./features/tots/BotProfileScreen";
+import { BotRoutineScreen } from "./features/tots/BotRoutineScreen";
+import { TotsSettingsScreen } from "./features/tots/TotsSettingsScreen";
+import {
+  BotChatHeaderMenu,
+  BotChatHeaderTitle,
+  BotChatScreen,
+} from "./features/bots/BotChatScreen";
 import { SettingsNavigationRouteScreen } from "./features/settings/SettingsNavigationRouteScreen";
 import { SettingsAppearanceRouteScreen } from "./features/settings/SettingsAppearanceRouteScreen";
 import { SettingsClientStorageRouteScreen } from "./features/settings/SettingsClientStorageRouteScreen";
@@ -706,6 +717,46 @@ const RootStackConfig = createWorkspaceStackNavigator({
       screen: ThreadRouteScreen,
       linking: { path: "threads/:environmentId?/:threadId?", alias: ["new/draft"] },
       options: THREAD_HEADER_OPTIONS,
+    }),
+    BotNew: createNativeStackScreen({
+      screen: BotNewScreen,
+      linking: "bots/new",
+      options: { ...SHEET_GLASS_HEADER_OPTIONS, title: "New bot" },
+    }),
+    BotTeamNew: createNativeStackScreen({
+      screen: BotTeamNewScreen,
+      linking: "bots/teams/new",
+      options: { ...SHEET_GLASS_HEADER_OPTIONS, title: "New team" },
+    }),
+    BotChat: createNativeStackScreen({
+      screen: BotChatScreen,
+      linking: "bots/chat/:botId",
+      options: {
+        ...GLASS_HEADER_OPTIONS,
+        title: "Bot",
+        headerTitle: BotChatHeaderTitle,
+        headerRight: BotChatHeaderMenu,
+      },
+    }),
+    BotProfile: createNativeStackScreen({
+      screen: BotProfileScreen,
+      linking: "bots/profile/:botId",
+      options: { ...GLASS_HEADER_OPTIONS, title: "" },
+    }),
+    BotRoutine: createNativeStackScreen({
+      screen: BotRoutineScreen,
+      linking: "bots/routine/:botId",
+      options: { ...SHEET_GLASS_HEADER_OPTIONS, title: "Routine" },
+    }),
+    TotsSettings: createNativeStackScreen({
+      screen: TotsSettingsScreen,
+      linking: "tots/settings",
+      options: { ...SHEET_GLASS_HEADER_OPTIONS, title: "Settings" },
+    }),
+    BotTeam: createNativeStackScreen({
+      screen: BotTeamScreen,
+      linking: "bots/teams/:teamId",
+      options: { ...GLASS_HEADER_OPTIONS, title: "Team" },
     }),
     NewTaskProject: createNativeStackScreen({
       screen: NewTaskRouteScreen,

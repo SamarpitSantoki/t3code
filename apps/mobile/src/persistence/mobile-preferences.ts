@@ -15,6 +15,7 @@ import {
   type SidebarProjectGroupingMode,
 } from "@t3tools/contracts";
 import type { ComposerEnterBehavior } from "../lib/composerEnterBehavior";
+import { isBotRegistry, type BotRegistry } from "../features/bots/bots-model";
 import type { FollowUpBehavior } from "../lib/followUpBehavior";
 import { isMicrophoneKind, type MicrophoneEntry } from "../lib/microphonePriority";
 import { MOBILE_THEME_IDS, type MobileThemeId, type MobileThemeMode } from "../lib/mobileTheme";
@@ -117,6 +118,13 @@ export interface Preferences {
   readonly threadListFilters?: ThreadListFilters;
   readonly pullRequestListFilters?: PullRequestListPreferences;
   readonly workspaceSelections?: WorkspaceSelections;
+  readonly bots?: BotRegistry;
+  /** Shows the T3 Code workspace instead of the Tots home. */
+  readonly totsClassic?: boolean;
+  /** When each Tots chat was last opened, by `environmentId:threadId`. */
+  readonly totsChatReads?: Readonly<Record<string, string>>;
+  /** Tots chats that never show an unread dot. */
+  readonly totsMutedChats?: ReadonlyArray<string>;
 }
 
 export class MobilePreferencesLoadError extends Schema.TaggedError<MobilePreferencesLoadError>()(
@@ -190,6 +198,10 @@ function sanitizePreferences(parsed: Preferences): Preferences {
     threadListFilters?: ThreadListFilters;
     pullRequestListFilters?: PullRequestListPreferences;
     workspaceSelections?: WorkspaceSelections;
+    bots?: BotRegistry;
+    totsClassic?: boolean;
+    totsChatReads?: Readonly<Record<string, string>>;
+    totsMutedChats?: ReadonlyArray<string>;
   } = {};
 
   if (Array.isArray(parsed.hiddenNavigationTabs)) {
@@ -331,6 +343,24 @@ function sanitizePreferences(parsed: Preferences): Preferences {
   }
   if (isWorkspaceSelections(parsed.workspaceSelections)) {
     preferences.workspaceSelections = parsed.workspaceSelections;
+  }
+  if (isBotRegistry(parsed.bots)) preferences.bots = parsed.bots;
+  if (typeof parsed.totsClassic === "boolean") preferences.totsClassic = parsed.totsClassic;
+  if (
+    typeof parsed.totsChatReads === "object" &&
+    parsed.totsChatReads !== null &&
+    !Array.isArray(parsed.totsChatReads)
+  ) {
+    preferences.totsChatReads = Object.fromEntries(
+      Object.entries(parsed.totsChatReads).filter(
+        (entry): entry is [string, string] => typeof entry[1] === "string",
+      ),
+    );
+  }
+  if (Array.isArray(parsed.totsMutedChats)) {
+    preferences.totsMutedChats = parsed.totsMutedChats.filter(
+      (key): key is string => typeof key === "string",
+    );
   }
   return preferences;
 }
