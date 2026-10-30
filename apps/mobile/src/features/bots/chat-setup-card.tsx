@@ -67,7 +67,7 @@ export function BotSetupCard(props: {
     failedReason: setup.failedReason,
   });
 
-  // oxlint-disable-next-line t3code/react-effect-budget -- One timer flips "starting" to "slow"; no app event marks a setup message as overdue.
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- One timer flips "starting" to "slow"; no app event marks a setup message as overdue.
   useEffect(() => {
     if (card.kind !== "starting") return;
     const startedAt = Math.max(Date.parse(queuedAt) || 0, since);

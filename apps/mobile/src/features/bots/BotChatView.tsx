@@ -15,16 +15,21 @@ import { KeyboardStickyView } from "react-native-keyboard-controller";
 import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { FilePreviewModal, type FilePreviewSource } from "../../components/FilePreviewModal";
 import { Menu } from "../../components/ui/Menu";
+import type { DraftComposerAttachment } from "../../lib/composerImages";
 import { copyTextWithHaptic } from "../../lib/copyTextWithHaptic";
 import { NativeScrollViewMarker } from "../../native/NativeScrollViewMarker";
 import { BotFace } from "../tots/BotFace";
 import { TOTS_FONT, TOTS_RADIUS, useTotsColors } from "../tots/theme";
 import { TotsGlyph, TotsText } from "../tots/ui";
+import { BotChatCardRow } from "./BotChatCard";
 import { BotMarkdown } from "./BotMarkdown";
 import { agentTalkLabel, findAgentSender } from "./agent-sender";
 import { formatBotTime } from "./bot-status";
 import type { Bot, TeamTimelineEntry } from "./bots-model";
+import { ChatAttachmentTray, ChatMessageAttachments } from "./ChatAttachments";
+import { canSendChat } from "./chat-attachments";
 import {
   groupHandoffs,
   handoffLabel,
@@ -66,12 +71,15 @@ export function BotChatView(props: {
   readonly composer: ChatComposerProps;
   /** Shown under unsent messages, e.g. "Waiting for server" while it is offline. */
   readonly pendingLabel?: string;
+  /** Where sent photos load from. */
+  readonly environmentId?: string | null;
 }) {
   const colors = useTotsColors();
   const insets = useSafeAreaInsets();
   const listRef = useRef<LegendListRef>(null);
   const composerRef = useRef<ViewInstance>(null);
   const [nearEnd, setNearEnd] = useState(true);
+  const [preview, setPreview] = useState<FilePreviewSource | null>(null);
   const bottomInset = Math.max(insets.bottom, 8);
   const { contentInsetEndAdjustment, onComposerLayout } = useKeyboardChatComposerInset(
     listRef,
@@ -148,6 +156,15 @@ export function BotChatView(props: {
               />
             );
           }
+          if (entry.kind === "card" && entry.card) {
+            return (
+              <BotChatCardRow
+                card={entry.card}
+                bot={props.botFor(entry.botId, entry.from)}
+                createdAt={entry.createdAt}
+              />
+            );
+          }
           if (entry.kind === "user") {
             return (
               <UserMessageRow
@@ -155,6 +172,8 @@ export function BotChatView(props: {
                 grouped={item.grouped}
                 directTo={props.directToLabel?.(entry) ?? null}
                 pendingLabel={props.pendingLabel ?? "Sending…"}
+                environmentId={props.environmentId ?? null}
+                onPreview={setPreview}
               />
             );
           }
@@ -216,6 +235,7 @@ export function BotChatView(props: {
           </View>
         </View>
       </KeyboardStickyView>
+      <FilePreviewModal source={preview} onRequestClose={() => setPreview(null)} />
     </View>
   );
 }
@@ -234,58 +254,76 @@ export interface ChatComposerProps {
   readonly busy?: boolean;
   /** False locks the input entirely, e.g. while the bot's thread is still being set up. */
   readonly editable?: boolean;
+  /** Picked photos and files, shown above the input. */
+  readonly attachments?: ReadonlyArray<DraftComposerAttachment>;
+  readonly onRemoveAttachment?: (id: string) => void;
+  /** A picker is reading files; shows a placeholder tile. */
+  readonly picking?: boolean;
+  /** Attachments alone cannot be sent, e.g. a new thread needs its task in words. */
+  readonly requiresText?: boolean;
 }
 
 function ChatComposer({ ref, ...props }: ChatComposerProps) {
   const colors = useTotsColors();
-  const canSend = props.value.trim().length > 0 && !props.busy && props.editable !== false;
+  const attachmentCount = props.attachments?.length ?? 0;
+  const canSend =
+    canSendChat({ text: props.value, attachmentCount, requiresText: props.requiresText }) &&
+    !props.busy &&
+    !props.picking &&
+    props.editable !== false;
+  const idle = props.value.trim().length === 0 && attachmentCount === 0;
   return (
     <View
       style={{
-        flexDirection: "row",
-        alignItems: "flex-end",
-        gap: 4,
         borderRadius: TOTS_RADIUS.input,
         borderWidth: 1,
         borderColor: colors.line,
         backgroundColor: colors.card,
         padding: 5,
+        gap: 4,
       }}
     >
-      {props.leading}
-      <RNTextInput
-        ref={ref}
-        accessibilityLabel={props.accessibilityLabel}
-        value={props.value}
-        onChangeText={props.onChangeText}
-        editable={props.editable ?? true}
-        multiline
-        placeholder={props.placeholder}
-        placeholderTextColor={colors.placeholder}
-        cursorColor={colors.ink}
-        selectionColor={colors.blue}
-        textAlignVertical="center"
-        style={{
-          flex: 1,
-          minHeight: SEND_SIZE,
-          maxHeight: 140,
-          paddingHorizontal: 10,
-          paddingVertical: 8,
-          fontSize: 16,
-          color: colors.ink,
-        }}
+      <ChatAttachmentTray
+        attachments={props.attachments ?? []}
+        picking={props.picking}
+        onRemove={(id) => props.onRemoveAttachment?.(id)}
       />
-      {props.value.trim().length === 0 && props.idleAction ? (
-        props.idleAction
-      ) : (
-        <ChatSendButton
-          disabled={!canSend}
-          onPress={() => {
-            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            props.onSend();
+      <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 4 }}>
+        {props.leading}
+        <RNTextInput
+          ref={ref}
+          accessibilityLabel={props.accessibilityLabel}
+          value={props.value}
+          onChangeText={props.onChangeText}
+          editable={props.editable ?? true}
+          multiline
+          placeholder={props.placeholder}
+          placeholderTextColor={colors.placeholder}
+          cursorColor={colors.ink}
+          selectionColor={colors.blue}
+          textAlignVertical="center"
+          style={{
+            flex: 1,
+            minHeight: SEND_SIZE,
+            maxHeight: 140,
+            paddingHorizontal: 10,
+            paddingVertical: 8,
+            fontSize: 16,
+            color: colors.ink,
           }}
         />
-      )}
+        {idle && props.idleAction ? (
+          props.idleAction
+        ) : (
+          <ChatSendButton
+            disabled={!canSend}
+            onPress={() => {
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              props.onSend();
+            }}
+          />
+        )}
+      </View>
     </View>
   );
 }
@@ -490,8 +528,11 @@ function UserMessageRow(props: {
   readonly grouped: boolean;
   readonly directTo: string | null;
   readonly pendingLabel: string;
+  readonly environmentId: string | null;
+  readonly onPreview: (source: FilePreviewSource) => void;
 }) {
   const colors = useTotsColors();
+  const hasText = props.entry.text.trim().length > 0;
   return (
     <View
       style={{
@@ -506,26 +547,34 @@ function UserMessageRow(props: {
           {`to @${props.directTo}`}
         </TotsText>
       ) : null}
-      <Menu
-        shouldOpenOnLongPress
-        actions={[{ id: "copy", title: "Copy text" }]}
-        onPressAction={() => copyTextWithHaptic(props.entry.text)}
-      >
-        <Pressable
-          accessibilityRole="text"
-          accessibilityHint="Touch and hold to copy"
-          style={{
-            backgroundColor: colors.primary,
-            borderRadius: 20,
-            borderBottomRightRadius: 6,
-            paddingHorizontal: 15,
-            paddingVertical: 10,
-            opacity: props.entry.pending ? 0.6 : 1,
-          }}
+      <ChatMessageAttachments
+        attachments={props.entry.attachments ?? []}
+        environmentId={props.environmentId}
+        dimmed={props.entry.pending}
+        onPreview={props.onPreview}
+      />
+      {hasText ? (
+        <Menu
+          shouldOpenOnLongPress
+          actions={[{ id: "copy", title: "Copy text" }]}
+          onPressAction={() => copyTextWithHaptic(props.entry.text)}
         >
-          <Text style={[TOTS_FONT.body, { color: colors.onPrimary }]}>{props.entry.text}</Text>
-        </Pressable>
-      </Menu>
+          <Pressable
+            accessibilityRole="text"
+            accessibilityHint="Touch and hold to copy"
+            style={{
+              backgroundColor: colors.primary,
+              borderRadius: 20,
+              borderBottomRightRadius: 6,
+              paddingHorizontal: 15,
+              paddingVertical: 10,
+              opacity: props.entry.pending ? 0.6 : 1,
+            }}
+          >
+            <Text style={[TOTS_FONT.body, { color: colors.onPrimary }]}>{props.entry.text}</Text>
+          </Pressable>
+        </Menu>
+      ) : null}
       {props.entry.pending ? (
         <TotsText variant="small" tone="muted" style={{ paddingRight: 6 }}>
           {props.pendingLabel}

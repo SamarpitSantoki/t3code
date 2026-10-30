@@ -1,4 +1,5 @@
 import type { TeamTimelineEntry } from "./bots-model";
+import type { ChatEntryAttachment } from "./chat-attachments";
 
 export interface PendingChatMessage {
   readonly id: string;
@@ -6,6 +7,7 @@ export interface PendingChatMessage {
   readonly botName: string;
   readonly text: string;
   readonly createdAt: string;
+  readonly attachments?: ReadonlyArray<ChatEntryAttachment>;
 }
 
 // Device and server clocks differ, so an echo can carry a slightly earlier time.
@@ -46,6 +48,9 @@ export function mergePendingMessages(
       createdAt: message.createdAt,
       streaming: false,
       pending: true,
+      ...(message.attachments && message.attachments.length > 0
+        ? { attachments: message.attachments }
+        : {}),
     })),
   ];
 }

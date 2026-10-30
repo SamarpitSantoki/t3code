@@ -392,3 +392,87 @@ describe("bot memory", () => {
     expect(firstTaskFromOpening(opening)).toBe("Fix the build");
   });
 });
+
+describe("buildTeamTimeline attachments", () => {
+  const photo = {
+    type: "image",
+    id: "att-1",
+    name: "screen.png",
+    mimeType: "image/png",
+    sizeBytes: 1200,
+  };
+
+  it("keeps the photos and files of user messages, also without text", () => {
+    const timeline = buildTeamTimeline({
+      hiddenMessageIds: [],
+      sources: [
+        {
+          bot: lead,
+          messages: [
+            {
+              id: "m1",
+              role: "user",
+              text: "",
+              createdAt: "2026-10-27T10:01:00.000Z",
+              streaming: false,
+              attachments: [photo],
+            },
+            {
+              id: "m2",
+              role: "user",
+              text: "No files",
+              createdAt: "2026-10-27T10:02:00.000Z",
+              streaming: false,
+            },
+          ],
+        },
+      ],
+    });
+    expect(timeline.map((entry) => [entry.text, entry.attachments])).toStrictEqual([
+      [
+        "",
+        [
+          {
+            id: "att-1",
+            kind: "image",
+            name: "screen.png",
+            mimeType: "image/png",
+            sizeBytes: 1200,
+            assetId: "att-1",
+          },
+        ],
+      ],
+      ["No files", undefined],
+    ]);
+  });
+
+  it("keeps the attachments of a new thread's first task", () => {
+    const opening = buildBotThreadOpening({
+      name: "Lead",
+      role: "Leads",
+      mainThreadId: "main",
+      task: "Look at this",
+    });
+    const timeline = buildTeamTimeline({
+      hiddenMessageIds: [],
+      sources: [
+        {
+          bot: { ...lead, setupMessageId: "open" },
+          messages: [
+            {
+              id: "open",
+              role: "user",
+              text: opening,
+              createdAt: "2026-10-27T10:01:00.000Z",
+              streaming: false,
+              attachments: [photo],
+            },
+          ],
+        },
+      ],
+    });
+    expect(timeline.map((entry) => [entry.text, entry.attachments?.length])).toStrictEqual([
+      ["Look at this", 1],
+    ]);
+  });
+});

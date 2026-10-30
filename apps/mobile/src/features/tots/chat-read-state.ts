@@ -73,7 +73,7 @@ export function useMarkChatRead(environmentId: string, threadId: string | null):
     markChatRead(chatKey, latestMs);
   });
 
-  // oxlint-disable-next-line t3code/react-effect-budget -- saves the read time as the chat opens, as each new message lands, and as it closes.
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- saves the read time as the chat opens, as each new message lands, and as it closes.
   useEffect(() => {
     if (key === null) return;
     markRead(key, latestId);

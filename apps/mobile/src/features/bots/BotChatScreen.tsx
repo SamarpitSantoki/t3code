@@ -13,7 +13,7 @@ import { Menu } from "../../components/ui/Menu";
 import { NativeStackScreenOptions } from "../../native/StackHeader";
 import { BotFace, moodForStatus } from "../tots/BotFace";
 import { TOTS_FONT, TOTS_RADIUS, useTotsColors, type TotsColors } from "../tots/theme";
-import { TotsGlyph, TotsIconButton, TotsText } from "../tots/ui";
+import { TotsGlyph, TotsText } from "../tots/ui";
 import { offlineSendNote } from "../tots/server-model";
 import { useServer } from "../tots/server-ui";
 import { useMarkChatRead } from "../tots/chat-read-state";
@@ -27,6 +27,7 @@ import {
   type ChatBot,
 } from "./BotChatView";
 import { BotRequests } from "./BotRequestCard";
+import { ChatAttachMenu } from "./ChatAttachments";
 import type { Bot } from "./bots-model";
 import { useBotRegistry, useBotThreadTarget, useBotTimeline } from "./bots-state";
 import { useStartBotThread } from "./chat-new-thread";
@@ -35,6 +36,7 @@ import { mergePendingMessages } from "./chat-pending";
 import { chatStatusLine, resolveShownChat, type ChatStatusTone } from "./chat-thread";
 import { layoutTeamTimeline } from "./team-timeline-layout";
 import { useBotRequests } from "./use-bot-requests";
+import { useChatAttachments } from "./use-chat-attachments";
 import { useChatSend } from "./use-chat-send";
 
 type BotChatParams = {
@@ -66,8 +68,9 @@ export function BotChatScreen({ route }: BotChatScreenProps) {
   );
   const target = useBotThreadTarget(bot);
   const [text, setText] = useState("");
-  const { pending, send } = useChatSend({ text, setText });
-  const thread = useStartBotThread({ text, setText });
+  const attachments = useChatAttachments(bot?.environmentId ?? null);
+  const { pending, send } = useChatSend({ text, setText, attachments });
+  const thread = useStartBotThread({ text, setText, attachments });
   const inputRef = useRef<TextInputInstance>(null);
   const threadStatus = useBotThreadStatus(
     { environmentId: bot?.environmentId ?? "" },
@@ -129,6 +132,7 @@ export function BotChatScreen({ route }: BotChatScreenProps) {
           )
         }
         pendingLabel={sendNote !== null ? "Waiting for server" : undefined}
+        environmentId={bot.environmentId}
         header={
           shown.kind === "main" ? (
             <BotIntro
@@ -179,7 +183,22 @@ export function BotChatScreen({ route }: BotChatScreenProps) {
           onSend,
           busy: thread.starting || settingUp,
           editable: !settingUp,
-          leading: isNew ? undefined : <ComposerPlusMenu onNewThread={openNewThread} />,
+          attachments: attachments.attachments,
+          onRemoveAttachment: attachments.remove,
+          picking: attachments.picking,
+          // The first message names a new thread, so it needs words.
+          requiresText: isNew,
+          leading: (
+            <ChatAttachMenu
+              disabled={settingUp}
+              actions={isNew ? [] : [{ id: "new", title: "New thread" }]}
+              onAction={(id) => {
+                if (id === "new") openNewThread();
+              }}
+              onPhoto={() => void attachments.pickPhotos()}
+              onFile={() => void attachments.pickFiles()}
+            />
+          ),
           idleAction: isNew ? undefined : <StopAction bot={threadBot} />,
         }}
       />
@@ -359,24 +378,6 @@ function SendNote(props: { readonly children: string }) {
         {props.children}
       </Text>
     </View>
-  );
-}
-
-function ComposerPlusMenu(props: { readonly onNewThread: () => void }) {
-  return (
-    <Menu
-      accessibilityLabel="More"
-      actions={[{ id: "new", title: "New thread" }]}
-      onPressAction={({ nativeEvent }) => {
-        if (nativeEvent.event === "new") props.onNewThread();
-      }}
-    >
-      <TotsIconButton accessibilityLabel="More" size={38} onPress={() => undefined}>
-        <TotsGlyph size={20} tone="muted">
-          +
-        </TotsGlyph>
-      </TotsIconButton>
-    </Menu>
   );
 }
 

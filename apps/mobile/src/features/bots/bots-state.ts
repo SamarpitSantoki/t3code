@@ -12,6 +12,7 @@ import {
 import * as DateTime from "effect/DateTime";
 import { AsyncResult, Atom } from "effect/reactivity";
 
+import type { DraftComposerAttachment } from "../../lib/composerImages";
 import { makeQueuedMessageMetadata, makeTurnCommandMetadata } from "../../lib/commandMetadata";
 import { uuidv4 } from "../../lib/uuid";
 import { mobilePreferencesAtom, updateMobilePreferencesAtom } from "../../state/preferences";
@@ -27,6 +28,7 @@ import { dispatchingQueuedMessageIdAtom } from "../../state/use-thread-outbox";
 import { scopedThreadKey } from "../../lib/scopedEntities";
 import { useProject, useThreadShell } from "../../state/entities";
 import { environmentThreadDetails } from "../../state/threads";
+import { botChatCardItems } from "./chat-request-items";
 import {
   buildBotSetupMessage,
   buildBotThreadOpening,
@@ -63,7 +65,11 @@ interface NewThreadTarget {
   readonly runtimeMode: RuntimeMode;
 }
 
-async function startBotThread(target: NewThreadTarget, text: string) {
+async function startBotThread(
+  target: NewThreadTarget,
+  text: string,
+  attachments: ReadonlyArray<DraftComposerAttachment> = [],
+) {
   const metadata = makeTurnCommandMetadata();
   await enqueueThreadOutboxMessage({
     environmentId: target.project.environmentId,
@@ -71,7 +77,7 @@ async function startBotThread(target: NewThreadTarget, text: string) {
     messageId: MessageId.make(metadata.messageId),
     commandId: CommandId.make(metadata.commandId),
     text,
-    attachments: [],
+    attachments,
     modelSelection: target.modelSelection,
     runtimeMode: target.runtimeMode,
     interactionMode: "default",
@@ -128,7 +134,11 @@ export async function createBot(
 
 /** Opens a fresh thread with the same bot; the task starts it working right away. */
 export async function createBotThread(
-  input: NewThreadTarget & { readonly bot: Bot; readonly task: string },
+  input: NewThreadTarget & {
+    readonly bot: Bot;
+    readonly task: string;
+    readonly attachments?: ReadonlyArray<DraftComposerAttachment>;
+  },
 ): Promise<BotThread> {
   const task = input.task.trim();
   const metadata = await startBotThread(
@@ -139,6 +149,7 @@ export async function createBotThread(
       mainThreadId: input.bot.threadId,
       task,
     }),
+    input.attachments,
   );
   return {
     threadId: metadata.threadId,
@@ -202,8 +213,13 @@ export async function restartBotSetup(
   return startBotThread(input, input.text);
 }
 
-/** Returns the queued message id. */
-export async function sendToBot(bot: Bot, text: string, threadId = bot.threadId): Promise<string> {
+/** Returns the queued message id. The outbox uploads attachments when it delivers. */
+export async function sendToBot(
+  bot: Bot,
+  text: string,
+  threadId = bot.threadId,
+  attachments: ReadonlyArray<DraftComposerAttachment> = [],
+): Promise<string> {
   const metadata = makeQueuedMessageMetadata();
   await enqueueThreadOutboxMessage({
     environmentId: EnvironmentId.make(bot.environmentId),
@@ -211,7 +227,7 @@ export async function sendToBot(bot: Bot, text: string, threadId = bot.threadId)
     messageId: MessageId.make(metadata.messageId),
     commandId: CommandId.make(metadata.commandId),
     text,
-    attachments: [],
+    attachments,
     createdAt: metadata.createdAt,
   });
   return metadata.messageId;
@@ -255,13 +271,14 @@ const teamTimelineAtom = Atom.family((key: string) => {
       hiddenMessageIds,
       senders,
       sources: bots.map((bot) => {
-        const thread = get(
-          environmentThreadDetails.threadAtom(
-            scopeThreadRef(EnvironmentId.make(bot.environmentId), ThreadId.make(bot.threadId)),
-          ),
+        const ref = scopeThreadRef(
+          EnvironmentId.make(bot.environmentId),
+          ThreadId.make(bot.threadId),
         );
+        const thread = get(environmentThreadDetails.threadAtom(ref));
         return {
           bot,
+          cardItems: botChatCardItems(get(environmentThreadDetails.visibleTurnItemsAtom(ref))),
           messages: (thread?.projection.messages ?? []).map((message) => ({
             id: message.id,
             role: message.role,
@@ -269,6 +286,7 @@ const teamTimelineAtom = Atom.family((key: string) => {
             createdAt: DateTime.formatIso(message.createdAt),
             streaming: message.streaming,
             senderThreadId: message.senderThreadId,
+            attachments: message.attachments,
           })),
         };
       }),

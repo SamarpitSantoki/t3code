@@ -63,3 +63,29 @@ describe("mergePendingMessages", () => {
     ]);
   });
 });
+
+describe("mergePendingMessages attachments", () => {
+  it("shows the photos of a message while it is sending", () => {
+    const photo = {
+      id: "a1",
+      kind: "image" as const,
+      name: "a.png",
+      mimeType: "image/png",
+      sizeBytes: 10,
+      localUri: "file:///a.png",
+    };
+    const merged = mergePendingMessages(
+      [],
+      [{ ...pending("p1", "", "2026-10-27T10:00:00.000Z"), attachments: [photo] }],
+    );
+    expect(merged.map((entry) => entry.attachments)).toStrictEqual([[photo]]);
+  });
+
+  it("clears a photo-only message when its echo arrives", () => {
+    const merged = mergePendingMessages(
+      [userEntry("m1", "", "2026-10-27T10:00:01.000Z")],
+      [pending("p1", "", "2026-10-27T10:00:00.000Z")],
+    );
+    expect(merged.map((entry) => entry.id)).toStrictEqual(["m1"]);
+  });
+});

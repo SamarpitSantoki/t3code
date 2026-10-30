@@ -169,7 +169,7 @@ export function useServerBots(): ReadonlyArray<ServerBot> {
       .map((shell) => [shell.environmentId, shell.id]),
   );
 
-  // oxlint-disable-next-line t3code/react-effect-budget -- starts server reads for threads that come into view; the queue drops repeats.
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- starts server reads for threads that come into view; the queue drops repeats.
   useEffect(() => {
     const targets = JSON.parse(unknown) as ReadonlyArray<readonly [string, string]>;
     enqueue(targets.map(([environmentId, threadId]) => ({ environmentId, threadId })));

@@ -49,6 +49,7 @@ export function layoutTeamTimeline(
       previous !== null &&
       entry.kind !== "handoff" &&
       entry.kind !== "agent" &&
+      entry.kind !== "card" &&
       previous.kind === entry.kind &&
       previous.botId === entry.botId &&
       previousDay === day &&

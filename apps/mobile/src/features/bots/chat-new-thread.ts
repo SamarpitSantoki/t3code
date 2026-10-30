@@ -4,7 +4,9 @@ import * as Dialog from "../../components/ui/Dialog";
 import { uuidv4 } from "../../lib/uuid";
 import { addBotThread, type Bot, type BotThread } from "./bots-model";
 import { createBotThread, useBotThreadTarget, useUpdateBotRegistry } from "./bots-state";
+import { entryAttachmentsFromDrafts } from "./chat-attachments";
 import type { PendingChatMessage } from "./chat-pending";
+import type { ChatAttachmentDraft } from "./use-chat-attachments";
 
 type ThreadTarget = NonNullable<ReturnType<typeof useBotThreadTarget>>;
 
@@ -12,6 +14,8 @@ type ThreadTarget = NonNullable<ReturnType<typeof useBotThreadTarget>>;
 export function useStartBotThread(input: {
   readonly text: string;
   readonly setText: (text: string) => void;
+  /** Photos and files to send with the first task. */
+  readonly attachments?: ChatAttachmentDraft;
 }) {
   const updateRegistry = useUpdateBotRegistry();
   const [pending, setPending] = useState<ReadonlyArray<PendingChatMessage>>([]);
@@ -27,18 +31,22 @@ export function useStartBotThread(input: {
       );
       return;
     }
+    const attachments =
+      (input.attachments?.attachments.length ?? 0) > 0 ? (input.attachments?.take() ?? null) : [];
+    if (attachments === null) return;
     const message: PendingChatMessage = {
       id: uuidv4(),
       botId: bot.id,
       botName: bot.name,
       text: task,
       createdAt: new Date().toISOString(),
+      attachments: entryAttachmentsFromDrafts(attachments),
     };
     const draft = input.text;
     setPending((current) => [...current, message]);
     setStarting(true);
     input.setText("");
-    createBotThread({ bot, task, ...target })
+    createBotThread({ bot, task, attachments, ...target })
       .then((thread) => {
         updateRegistry((registry) => addBotThread(registry, bot.id, thread));
         setStarting(false);
@@ -48,6 +56,7 @@ export function useStartBotThread(input: {
         setPending((current) => current.filter((candidate) => candidate.id !== message.id));
         setStarting(false);
         input.setText(draft);
+        if (attachments.length > 0) input.attachments?.restore(attachments);
         Dialog.alert("Could not start the thread", String(error));
       });
   };

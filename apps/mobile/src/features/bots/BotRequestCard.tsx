@@ -8,7 +8,7 @@ import * as Haptics from "expo-haptics";
 import { useState, type ReactNode } from "react";
 import { Platform, Pressable, Text, TextInput, View } from "react-native";
 
-import { isPendingUserInputOptionSelected } from "../../lib/threadActivity";
+import { isPendingUserInputOptionSelected } from "@t3tools/client-runtime/state/pending-user-input";
 import { BotFace } from "../tots/BotFace";
 import { TOTS_FONT, TOTS_RADIUS, useTotsColors } from "../tots/theme";
 import { TotsButton, TotsCard, TotsGlyph, TotsText } from "../tots/ui";

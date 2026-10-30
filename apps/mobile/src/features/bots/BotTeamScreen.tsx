@@ -21,6 +21,8 @@ import { resolveTeamMessageTarget, type Bot, type BotRegistry } from "./bots-mod
 import { useBotRegistry, useTeamTimeline } from "./bots-state";
 import { mergePendingMessages } from "./chat-pending";
 import { joinNames, layoutTeamTimeline, withMention } from "./team-timeline-layout";
+import { ChatAttachMenu } from "./ChatAttachments";
+import { useChatAttachments } from "./use-chat-attachments";
 import { useChatSend } from "./use-chat-send";
 
 type BotTeamScreenProps = StaticScreenProps<{ readonly teamId: string }>;
@@ -45,7 +47,9 @@ export function BotTeamScreen({ route }: BotTeamScreenProps) {
   const activity = useBotsActivity(roster);
   const timeline = useTeamTimeline(team, registry.bots);
   const [text, setText] = useState("");
-  const { pending, send } = useChatSend({ text, setText });
+  // A team lives in one environment; every bot in it shares the lead's server.
+  const attachments = useChatAttachments(lead?.environmentId ?? null);
+  const { pending, send } = useChatSend({ text, setText, attachments });
   const inputRef = useRef<TextInputInstance>(null);
   // The team row's unread dot follows the lead's thread.
   useMarkChatRead(lead?.environmentId ?? "", lead?.threadId ?? null);
@@ -100,6 +104,7 @@ export function BotTeamScreen({ route }: BotTeamScreenProps) {
         onOpenBot={(botId) => openBot({ id: botId })}
         savedBots={registry.bots}
         onOpenSender={(botId, threadId) => openBot({ id: botId }, threadId ?? undefined)}
+        environmentId={lead.environmentId}
         header={
           <MemberStrip
             roster={roster}
@@ -130,29 +135,38 @@ export function BotTeamScreen({ route }: BotTeamScreenProps) {
           placeholder: "Message the team",
           accessibilityLabel: `Message ${team.name}`,
           onSend: () => send(target.bot, target.text),
+          attachments: attachments.attachments,
+          onRemoveAttachment: attachments.remove,
+          picking: attachments.picking,
           leading: (
-            <Menu
-              accessibilityLabel="Mention a teammate"
-              actions={roster.map((bot) => ({
-                id: bot.id,
-                title: bot.name,
-                subtitle: bot.id === lead.id ? "Lead" : undefined,
-              }))}
-              onPressAction={({ nativeEvent }) => {
-                const bot = roster.find((candidate) => candidate.id === nativeEvent.event);
-                if (bot) mention(bot);
-              }}
-            >
-              <TotsIconButton
+            <>
+              <ChatAttachMenu
+                onPhoto={() => void attachments.pickPhotos()}
+                onFile={() => void attachments.pickFiles()}
+              />
+              <Menu
                 accessibilityLabel="Mention a teammate"
-                size={38}
-                onPress={() => undefined}
+                actions={roster.map((bot) => ({
+                  id: bot.id,
+                  title: bot.name,
+                  subtitle: bot.id === lead.id ? "Lead" : undefined,
+                }))}
+                onPressAction={({ nativeEvent }) => {
+                  const bot = roster.find((candidate) => candidate.id === nativeEvent.event);
+                  if (bot) mention(bot);
+                }}
               >
-                <TotsGlyph size={17} tone="muted">
-                  @
-                </TotsGlyph>
-              </TotsIconButton>
-            </Menu>
+                <TotsIconButton
+                  accessibilityLabel="Mention a teammate"
+                  size={38}
+                  onPress={() => undefined}
+                >
+                  <TotsGlyph size={17} tone="muted">
+                    @
+                  </TotsGlyph>
+                </TotsIconButton>
+              </Menu>
+            </>
           ),
         }}
       />

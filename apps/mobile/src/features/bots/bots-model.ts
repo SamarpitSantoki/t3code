@@ -1,7 +1,19 @@
+import type { OrchestrationV2ProjectedTurnItem } from "@t3tools/contracts";
 import * as Schema from "effect/Schema";
 
 import { formatAgentMessageHeader, parseAgentMessage } from "./agent-message";
 import { T3_MANAGER_THREAD_TITLE } from "./bot-identity";
+import {
+  entryAttachmentsFromMessage,
+  type ChatEntryAttachment,
+  type MessageAttachmentFields,
+} from "./chat-attachments";
+import {
+  botChatCardCreatedAt,
+  botChatCardKind,
+  botChatCardText,
+  type BotChatCard,
+} from "./chat-request-items";
 
 /** A fresh conversation with the same bot, beside its continuous main chat. */
 export const BotThread = Schema.Struct({
@@ -281,7 +293,10 @@ export function resolveTeamMessageTarget<T extends Pick<Bot, "id" | "name">>(inp
 }
 
 export interface TeamMessageSource {
-  readonly bot: Pick<Bot, "id" | "name" | "threadId" | "setupMessageId">;
+  readonly bot: Pick<Bot, "id" | "name" | "threadId" | "setupMessageId"> &
+    Partial<Pick<Bot, "environmentId">>;
+  /** Turn items the thread feed shows as cards, such as secret and link requests. */
+  readonly cardItems?: ReadonlyArray<OrchestrationV2ProjectedTurnItem>;
   readonly messages: ReadonlyArray<{
     readonly id: string;
     readonly role: "user" | "assistant" | "system";
@@ -289,13 +304,17 @@ export interface TeamMessageSource {
     readonly createdAt: string;
     readonly streaming: boolean;
     readonly senderThreadId?: string | undefined;
+    readonly attachments?: ReadonlyArray<MessageAttachmentFields> | undefined;
   }>;
 }
 
 export interface TeamTimelineEntry {
   readonly id: string;
-  /** "agent": another bot wrote it with a `From <Name> (thread <id>):` header, not the user. */
-  readonly kind: "user" | "handoff" | "agent" | "bot";
+  /**
+   * "agent": another bot wrote it with a `From <Name> (thread <id>):` header, not the user.
+   * "card": a turn item the user can act on, such as a secret or link request.
+   */
+  readonly kind: "user" | "handoff" | "agent" | "bot" | "card";
   /** Who wrote it: "You" or a bot name. */
   readonly from: string;
   /** The bot that received it, for user and handoff entries. */
@@ -308,6 +327,10 @@ export interface TeamTimelineEntry {
   readonly fromThreadId?: string;
   /** Sent from this device and not yet echoed by the server. */
   readonly pending?: boolean;
+  /** Photos and files the user sent with the message. */
+  readonly attachments?: ReadonlyArray<ChatEntryAttachment>;
+  /** The turn item behind a "card" entry. */
+  readonly card?: BotChatCard;
 }
 
 export function buildTeamTimeline(input: {
@@ -323,6 +346,26 @@ export function buildTeamTimeline(input: {
   ]);
   const entries: TeamTimelineEntry[] = [];
   for (const source of input.sources) {
+    for (const projectedItem of source.cardItems ?? []) {
+      const kind = botChatCardKind(projectedItem);
+      if (kind === null) continue;
+      entries.push({
+        id: `${source.bot.id}:card:${projectedItem.item.id}`,
+        kind: "card",
+        from: source.bot.name,
+        to: null,
+        botId: source.bot.id,
+        text: botChatCardText(projectedItem),
+        createdAt: botChatCardCreatedAt(projectedItem),
+        streaming: projectedItem.item.type === "proposed_plan" && projectedItem.item.streaming,
+        card: {
+          environmentId: source.bot.environmentId ?? "",
+          threadId: source.bot.threadId,
+          kind,
+          projectedItem,
+        },
+      });
+    }
     for (const message of source.messages) {
       if (message.id === source.bot.setupMessageId) {
         const task = firstTaskFromOpening(message.text);
@@ -336,6 +379,7 @@ export function buildTeamTimeline(input: {
             text: task,
             createdAt: message.createdAt,
             streaming: false,
+            ...withAttachments(message.attachments),
           });
         }
         continue;
@@ -380,7 +424,13 @@ export function buildTeamTimeline(input: {
           text: agent.body,
         });
       } else {
-        entries.push({ ...base, kind: "user", from: "You", text: message.text });
+        entries.push({
+          ...base,
+          kind: "user",
+          from: "You",
+          text: message.text,
+          ...withAttachments(message.attachments),
+        });
       }
     }
   }
@@ -388,6 +438,11 @@ export function buildTeamTimeline(input: {
     (left, right) =>
       left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id),
   );
+}
+
+function withAttachments(attachments: ReadonlyArray<MessageAttachmentFields> | undefined) {
+  const shown = entryAttachmentsFromMessage(attachments);
+  return shown.length > 0 ? { attachments: shown } : {};
 }
 
 export function addBot(registry: BotRegistry, bot: Bot): BotRegistry {
